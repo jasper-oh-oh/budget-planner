@@ -593,6 +593,77 @@ canvas {
   background: rgba(79, 195, 247, 0.15);
 }
 
+/* Cloud Sync */
+.sync-section {
+  margin-top: 8px;
+}
+
+.sync-input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  flex: 1;
+  min-width: 0;
+}
+
+.sync-input:disabled {
+  opacity: 0.5;
+}
+
+.sync-actions {
+  gap: 8px;
+}
+
+.btn-sync {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn-sync:hover {
+  background: rgba(79, 195, 247, 0.15);
+}
+
+.sync-guide {
+  margin: 8px 0;
+  padding: 10px 12px;
+  background: rgba(79, 195, 247, 0.05);
+  border: 1px solid rgba(79, 195, 247, 0.15);
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.8;
+}
+
+.sync-status {
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  min-height: 20px;
+}
+
+.sync-syncing {
+  color: var(--accent);
+  background: rgba(79, 195, 247, 0.08);
+}
+
+.sync-success {
+  color: var(--positive);
+  background: rgba(76, 175, 80, 0.08);
+}
+
+.sync-error {
+  color: var(--negative);
+  background: rgba(244, 67, 54, 0.08);
+}
+
+.sync-disconnected {
+  color: var(--text-dim);
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;

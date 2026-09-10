@@ -147,7 +147,9 @@ const DataStore = {
   },
 
   save() {
+    this._data._lastModified = Date.now();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(this._data));
+    if (typeof CloudSync !== 'undefined') CloudSync.schedulePush(this._data);
   },
 
   getData() {
@@ -588,5 +590,24 @@ const DataStore = {
     this._data = JSON.parse(JSON.stringify(DEFAULT_DATA));
     this._initMonthlyData();
     this.save();
+  },
+
+  async syncFromCloud() {
+    if (typeof CloudSync === 'undefined' || !CloudSync.isConfigured()) return false;
+    try {
+      const remote = await CloudSync.pull();
+      if (!remote) return false;
+      const localTime = this._data._lastModified || 0;
+      const remoteTime = remote._lastModified || 0;
+      if (remoteTime > localTime) {
+        this._data = remote;
+        this._migrate();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(this._data));
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
   }
 };

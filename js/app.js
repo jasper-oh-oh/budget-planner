@@ -6,7 +6,23 @@ const App = {
     this._migrateOnce();
     this.bindTabs();
     this.bindSettings();
+    this._initSync();
     this.switchTab('budget');
+  },
+
+  _initSync() {
+    CloudSync.onStatus((type, msg) => {
+      const el = document.getElementById('sync-status');
+      if (el) {
+        el.textContent = msg;
+        el.className = 'sync-status sync-' + type;
+      }
+    });
+    if (CloudSync.isConfigured()) {
+      DataStore.syncFromCloud().then(updated => {
+        if (updated) this.switchTab(this.currentTab);
+      });
+    }
   },
 
   _migrateOnce() {
@@ -67,6 +83,9 @@ const App = {
   renderSettings(container) {
     const data = DataStore.getData();
     const s = data.settings;
+    const hasToken = !!CloudSync.getToken();
+    const hasGist = !!CloudSync.getGistId();
+    const isConnected = CloudSync.isConfigured();
 
     container.innerHTML = `
       <div class="settings-panel">
@@ -84,6 +103,36 @@ const App = {
           <input type="number" id="set-months" value="${s.months}" min="1" max="60">
         </div>
         <button class="btn" onclick="App.saveSettings()">설정 저장</button>
+
+        <hr>
+        <h3>클라우드 동기화</h3>
+        <div class="sync-section">
+          <div class="settings-row">
+            <label>GitHub Token:</label>
+            <input type="password" id="sync-token" value="${hasToken ? '••••••••' : ''}" placeholder="ghp_xxxx..." class="sync-input">
+            <button class="btn btn-sm" onclick="App.connectSync()">
+              ${isConnected ? '재연결' : '연결'}
+            </button>
+          </div>
+          <div class="settings-row">
+            <label>Gist ID:</label>
+            <input type="text" id="sync-gist-id" value="${hasGist ? CloudSync.getGistId() : ''}" placeholder="자동 생성 또는 직접 입력" class="sync-input" ${isConnected ? '' : 'disabled'}>
+          </div>
+          ${isConnected ? `
+          <div class="settings-row sync-actions">
+            <button class="btn btn-sync" onclick="App.syncPush()">업로드</button>
+            <button class="btn btn-sync" onclick="App.syncPull()">다운로드</button>
+            <button class="btn btn-danger btn-sm" onclick="App.disconnectSync()">연결 해제</button>
+          </div>
+          ` : `
+          <div class="sync-guide">
+            <p>GitHub Personal Access Token (Classic)이 필요합니다.</p>
+            <p>1. <a href="https://github.com/settings/tokens/new?scopes=gist&description=Financial+Sync" target="_blank" style="color:var(--accent)">Classic Token 생성</a> → "gist" 체크 → Generate</p>
+            <p>2. 토큰(ghp_...)을 위 필드에 붙여넣고 "연결" 클릭</p>
+          </div>
+          `}
+          <div id="sync-status" class="sync-status"></div>
+        </div>
 
         <hr>
         <h3>데이터 관리</h3>
@@ -157,6 +206,77 @@ const App = {
     DataStore.resetToDefault();
     alert('초기화되었습니다.');
     this.switchTab(this.currentTab);
+  },
+
+  async connectSync() {
+    const tokenInput = document.getElementById('sync-token');
+    const gistInput = document.getElementById('sync-gist-id');
+    let token = tokenInput.value.trim();
+    if (token === '••••••••') token = CloudSync.getToken();
+    if (!token || !token.startsWith('ghp_')) {
+      alert('Classic Personal Access Token이 필요합니다.\n(ghp_로 시작하는 토큰)\n\nFine-grained 토큰(github_pat_)은 Gist API를 지원하지 않습니다.');
+      return;
+    }
+
+    const status = document.getElementById('sync-status');
+    status.textContent = '토큰 확인 중...';
+    status.className = 'sync-status sync-syncing';
+
+    const user = await CloudSync.validateToken(token);
+    if (!user) {
+      status.textContent = '토큰이 유효하지 않습니다.';
+      status.className = 'sync-status sync-error';
+      return;
+    }
+
+    CloudSync.setToken(token);
+    const gistId = gistInput.value.trim();
+    if (gistId) {
+      CloudSync.setGistId(gistId);
+      status.textContent = `${user.login} 계정으로 연결됨`;
+      status.className = 'sync-status sync-success';
+    } else {
+      try {
+        const data = DataStore.getData();
+        await CloudSync.createGist(data);
+      } catch {
+        return;
+      }
+    }
+    this.renderSettings(document.getElementById('tab-settings'));
+  },
+
+  async syncPush() {
+    try {
+      const data = DataStore.getData();
+      await CloudSync.push(data);
+    } catch { /* status callback handles UI */ }
+  },
+
+  async syncPull() {
+    try {
+      const updated = await DataStore.syncFromCloud();
+      if (updated) {
+        this.switchTab(this.currentTab);
+        const el = document.getElementById('sync-status');
+        if (el) {
+          el.textContent = '데이터를 클라우드에서 불러왔습니다.';
+          el.className = 'sync-status sync-success';
+        }
+      } else {
+        const el = document.getElementById('sync-status');
+        if (el) {
+          el.textContent = '로컬 데이터가 이미 최신입니다.';
+          el.className = 'sync-status sync-success';
+        }
+      }
+    } catch { /* status callback handles UI */ }
+  },
+
+  disconnectSync() {
+    if (!confirm('클라우드 동기화 연결을 해제하시겠습니까?\n(Gist 데이터는 삭제되지 않습니다)')) return;
+    CloudSync.disconnect();
+    this.renderSettings(document.getElementById('tab-settings'));
   }
 };
 

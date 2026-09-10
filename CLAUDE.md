@@ -5,13 +5,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 프로젝트 개요
 
 개인 재정관리 및 시뮬레이션 웹 도구. 순수 HTML/CSS/JS로 구성되며 서버 없이 브라우저에서 바로 실행된다.
-데이터는 localStorage에 저장되고, JSON import/export로 백업한다.
+데이터는 localStorage + GitHub Gist 클라우드 동기화로 관리된다.
 모든 UI와 메시지는 한국어로 통일한다.
+
+## 배포 및 접속
+
+- **GitHub Pages**: https://jasper-oh-oh.github.io/budget-planner/
+- **리포지토리**: https://github.com/jasper-oh-oh/budget-planner (Public)
+- 코드 수정 → `git push` → 1~2분 후 Pages 자동 배포
 
 ## 실행 방법
 
 ```
-# 브라우저에서 직접 열기
+# 웹 접속 (권장)
+https://jasper-oh-oh.github.io/budget-planner/
+
+# 로컬 개발 시
 start index.html
 
 # 또는 로컬 서버 (CORS 이슈 시)
@@ -25,7 +34,7 @@ python -m http.server 8080
 - **신용카드** (`cards.js`) — 카드별 이월잔액, 이자, 상환 시뮬레이션
 - **대출** (`loans.js`) — 대출별 잔액, 원금상환, 이자, 월납부액 시뮬레이션. 원리금균등/원금균등/만기일시 3가지 상환방식
 - **대시보드** (`chart.js`) — Canvas 기반 바/라인 차트. 외부 라이브러리 없음
-- **설정** (`app.js`) — 기간 설정, JSON 내보내기/가져오기, 초기화
+- **설정** (`app.js`) — 기간 설정, JSON 내보내기/가져오기, 클라우드 동기화, 초기화
 
 `data.js`가 중앙 데이터 스토어 역할:
 - `DataStore` 싱글턴이 localStorage를 래핑
@@ -33,12 +42,19 @@ python -m http.server 8080
 - 신용카드(`simulateCard`), 대출(`simulateLoan`) 시뮬레이션 로직 포함
 - 예산 테이블의 카드대금/대출 분류는 시뮬레이션 결과를 자동 반영 (읽기전용 Expected)
 
+`sync.js`가 클라우드 동기화 담당:
+- `CloudSync` 모듈이 GitHub Gist API와 통신 (fetch만 사용, 외부 SDK 없음)
+- GitHub Classic PAT (gist 스코프)로 인증, 토큰은 localStorage에만 저장
+- 데이터 편집 시 3초 디바운스 후 자동 push, 앱 시작 시 자동 pull
+- 새 기기에서는 토큰만 입력하면 Gist를 자동 검색하여 연결
+
 ## 핵심 데이터 흐름
 
 1. 앱 시작 → `DataStore.load()` → localStorage에서 데이터 복원 (없으면 DEFAULT_DATA 사용)
-2. 셀 편집 → `DataStore.updateCell()` → 자동 저장 → 테이블 재렌더링
-3. 카드 시뮬레이션 → `DataStore.simulateCard(card)` → 월별 이월/이자 계산 결과 반환
-4. 대출 시뮬레이션 → `DataStore.simulateLoan(loan)` → 월별 잔액/원금/이자/납부액 계산
+2. 앱 시작 → `CloudSync` 연결 확인 → Gist에서 pull → 최신이면 덮어쓰기
+3. 셀 편집 → `DataStore.updateCell()` → localStorage 저장 → 3초 후 Gist 자동 push
+4. 카드 시뮬레이션 → `DataStore.simulateCard(card)` → 월별 이월/이자 계산 결과 반환
+5. 대출 시뮬레이션 → `DataStore.simulateLoan(loan)` → 월별 잔액/원금/이자/납부액 계산
 
 ## 신용카드 계산 공식
 

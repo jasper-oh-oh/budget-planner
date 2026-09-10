@@ -163,6 +163,23 @@ const CloudSync = {
     }
   },
 
+  async findGist(token) {
+    try {
+      const res = await fetch(`${API_BASE}/gists`, {
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+      if (!res.ok) return null;
+      const gists = await res.json();
+      const match = gists.find(g => g.files && g.files[GIST_FILENAME]);
+      return match ? match.id : null;
+    } catch {
+      return null;
+    }
+  },
+
   disconnect() {
     this.setToken(null);
     this.setGistId(null);

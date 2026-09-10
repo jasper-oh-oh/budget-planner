@@ -116,7 +116,7 @@ const App = {
           </div>
           <div class="settings-row">
             <label>Gist ID:</label>
-            <input type="text" id="sync-gist-id" value="${hasGist ? CloudSync.getGistId() : ''}" placeholder="자동 생성 또는 직접 입력" class="sync-input" ${isConnected ? '' : 'disabled'}>
+            <input type="text" id="sync-gist-id" value="${hasGist ? CloudSync.getGistId() : ''}" placeholder="토큰 연결 시 자동 검색" class="sync-input sync-gist-readonly" readonly>
           </div>
           ${isConnected ? `
           <div class="settings-row sync-actions">
@@ -126,9 +126,10 @@ const App = {
           </div>
           ` : `
           <div class="sync-guide">
-            <p>GitHub Personal Access Token (Classic)이 필요합니다.</p>
+            <p>토큰 하나로 어디서든 동기화됩니다.</p>
             <p>1. <a href="https://github.com/settings/tokens/new?scopes=gist&description=Financial+Sync" target="_blank" style="color:var(--accent)">Classic Token 생성</a> → "gist" 체크 → Generate</p>
             <p>2. 토큰(ghp_...)을 위 필드에 붙여넣고 "연결" 클릭</p>
+            <p>3. 기존 Gist가 있으면 자동 검색, 없으면 새로 생성</p>
           </div>
           `}
           <div id="sync-status" class="sync-status"></div>
@@ -236,11 +237,22 @@ const App = {
       status.textContent = `${user.login} 계정으로 연결됨`;
       status.className = 'sync-status sync-success';
     } else {
-      try {
-        const data = DataStore.getData();
-        await CloudSync.createGist(data);
-      } catch {
-        return;
+      status.textContent = '기존 Gist 검색 중...';
+      status.className = 'sync-status sync-syncing';
+      const foundId = await CloudSync.findGist(token);
+      if (foundId) {
+        CloudSync.setGistId(foundId);
+        status.textContent = `${user.login} 계정의 Gist를 자동으로 찾았습니다.`;
+        status.className = 'sync-status sync-success';
+        const updated = await DataStore.syncFromCloud();
+        if (updated) this.switchTab(this.currentTab);
+      } else {
+        try {
+          const data = DataStore.getData();
+          await CloudSync.createGist(data);
+        } catch {
+          return;
+        }
       }
     }
     this.renderSettings(document.getElementById('tab-settings'));

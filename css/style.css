@@ -609,8 +609,10 @@ canvas {
   min-width: 0;
 }
 
-.sync-input:disabled {
+.sync-input:disabled,
+.sync-gist-readonly {
   opacity: 0.5;
+  cursor: default;
 }
 
 .sync-actions {

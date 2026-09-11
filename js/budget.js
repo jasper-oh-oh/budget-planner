@@ -33,6 +33,38 @@ const BudgetView = {
         th.style.top = h + 'px';
       });
     }
+
+    this._bindTooltip(wrapper);
+  },
+
+  _bindTooltip(wrapper) {
+    let tip = document.querySelector('.budget-tooltip');
+    if (!tip) {
+      tip = document.createElement('div');
+      tip.className = 'budget-tooltip';
+      document.body.appendChild(tip);
+    }
+
+    wrapper.addEventListener('mouseover', (e) => {
+      const cell = e.target.closest('[data-tooltip]');
+      if (!cell) return;
+      tip.textContent = cell.dataset.tooltip;
+      tip.style.display = 'block';
+    });
+
+    wrapper.addEventListener('mousemove', (e) => {
+      if (tip.style.display === 'block') {
+        tip.style.left = e.clientX + 12 + 'px';
+        tip.style.top = e.clientY - 28 + 'px';
+      }
+    });
+
+    wrapper.addEventListener('mouseout', (e) => {
+      const cell = e.target.closest('[data-tooltip]');
+      if (!cell || !cell.contains(e.relatedTarget)) {
+        tip.style.display = 'none';
+      }
+    });
   },
 
   setSortMode(mode) {

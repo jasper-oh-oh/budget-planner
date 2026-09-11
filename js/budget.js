@@ -1,5 +1,7 @@
 const BudgetView = {
   _sortMode: 'default',
+  _showExpected: true,
+  _showActual: true,
 
   render(container) {
     const data = DataStore.getData();
@@ -9,9 +11,14 @@ const BudgetView = {
 
     const toolbar = document.createElement('div');
     toolbar.className = 'toolbar';
+    const expActive = this._showExpected ? ' btn-toggle-active' : '';
+    const actActive = this._showActual ? ' btn-toggle-active' : '';
     toolbar.innerHTML = `
       <button onclick="BudgetView.addItem('income')" class="btn btn-sm">+ 수입 항목</button>
       <button onclick="BudgetView.addItem('expense')" class="btn btn-sm">+ 지출 항목</button>
+      <span class="toolbar-sep"></span>
+      <button class="btn btn-sm btn-toggle${expActive}" onclick="BudgetView.toggleColumn('expected')">예상</button>
+      <button class="btn btn-sm btn-toggle${actActive}" onclick="BudgetView.toggleColumn('actual')">실제</button>
     `;
     container.appendChild(toolbar);
 
@@ -67,6 +74,23 @@ const BudgetView = {
     });
   },
 
+  toggleColumn(col) {
+    if (col === 'expected') {
+      if (this._showExpected && !this._showActual) return;
+      this._showExpected = !this._showExpected;
+    } else {
+      if (this._showActual && !this._showExpected) return;
+      this._showActual = !this._showActual;
+    }
+    const container = document.getElementById('tab-budget');
+    const wrapper = container && container.querySelector('.table-wrapper');
+    const scrollLeft = wrapper ? wrapper.scrollLeft : 0;
+    const scrollTop = wrapper ? wrapper.scrollTop : 0;
+    this.render(container);
+    const newWrapper = container.querySelector('.table-wrapper');
+    if (newWrapper) { newWrapper.scrollLeft = scrollLeft; newWrapper.scrollTop = scrollTop; }
+  },
+
   setSortMode(mode) {
     if (this._sortMode === mode) return;
     this._sortMode = mode;
@@ -88,16 +112,18 @@ const BudgetView = {
       `<th class="sticky-col col-category sortable" rowspan="2" onclick="BudgetView.setSortMode('default')">분류</th>` +
       `<th class="sticky-col col-name sortable" rowspan="2" onclick="BudgetView.setSortMode('default')">항목</th>` +
       `<th class="sticky-col col-payday sortable${isPayDay ? ' sort-active' : ''}" rowspan="2" onclick="BudgetView.setSortMode('payDay')">납부일</th>`;
+    const colSpan = (this._showExpected ? 1 : 0) + (this._showActual ? 1 : 0);
     for (let i = 0; i < monthKeys.length; i++) {
       const even = i % 2 === 0 ? ' month-even' : '';
-      row1.innerHTML += `<th colspan="2" class="month-header${even}">${DataStore.getMonthLabel(monthKeys[i])}</th>`;
+      row1.innerHTML += `<th colspan="${colSpan}" class="month-header${even}">${DataStore.getMonthLabel(monthKeys[i])}</th>`;
     }
     thead.appendChild(row1);
 
     const row2 = document.createElement('tr');
     for (let i = 0; i < monthKeys.length; i++) {
       const even = i % 2 === 0 ? ' month-even' : '';
-      row2.innerHTML += `<th class="sub-header expected${even}">예상</th><th class="sub-header actual${even}">실제</th>`;
+      if (this._showExpected) row2.innerHTML += `<th class="sub-header expected${even}">예상</th>`;
+      if (this._showActual) row2.innerHTML += `<th class="sub-header actual${even}">실제</th>`;
     }
     thead.appendChild(row2);
 
@@ -106,12 +132,13 @@ const BudgetView = {
 
   _buildBody(data, monthKeys) {
     const tbody = document.createElement('tbody');
+    const colSpan = (this._showExpected ? 1 : 0) + (this._showActual ? 1 : 0);
 
     // === 수입 섹션 (항상 기본 순서) ===
     const incomeHeader = document.createElement('tr');
     incomeHeader.className = 'section-header income-section';
     incomeHeader.innerHTML = `<td class="sticky-col col-category section-title" colspan="3">수입</td>` +
-      monthKeys.map((_, i) => `<td colspan="2" class="${i % 2 === 0 ? 'month-even' : ''}"></td>`).join('');
+      monthKeys.map((_, i) => `<td colspan="${colSpan}" class="${i % 2 === 0 ? 'month-even' : ''}"></td>`).join('');
     tbody.appendChild(incomeHeader);
 
     const allIncome = this._collectIncomeItems(data);
@@ -135,7 +162,7 @@ const BudgetView = {
     const expenseHeader = document.createElement('tr');
     expenseHeader.className = 'section-header expense-section';
     expenseHeader.innerHTML = `<td class="sticky-col col-category section-title" colspan="3">지출</td>` +
-      monthKeys.map((_, i) => `<td colspan="2" class="${i % 2 === 0 ? 'month-even' : ''}"></td>`).join('');
+      monthKeys.map((_, i) => `<td colspan="${colSpan}" class="${i % 2 === 0 ? 'month-even' : ''}"></td>`).join('');
     tbody.appendChild(expenseHeader);
 
     const allExpense = this._collectExpenseItems(data);
@@ -279,9 +306,9 @@ const BudgetView = {
       const md = DataStore.ensureMonthData(mk);
       const section = type === 'income' ? md.income : md.expense;
       const d = section[item.id] || { expected: 0, actual: 0 };
-      cells += `<td class="cell expected${even}" data-tooltip="${item.name}" data-month="${mk}" data-type="${type}" data-item="${item.id}" data-field="expected"
+      if (this._showExpected) cells += `<td class="cell expected${even}" data-tooltip="${item.name}" data-month="${mk}" data-type="${type}" data-item="${item.id}" data-field="expected"
                     onclick="BudgetView.editCell(this)">${this._formatNumber(d.expected)}</td>`;
-      cells += `<td class="cell actual${even}" data-tooltip="${item.name}" data-month="${mk}" data-type="${type}" data-item="${item.id}" data-field="actual"
+      if (this._showActual) cells += `<td class="cell actual${even}" data-tooltip="${item.name}" data-month="${mk}" data-type="${type}" data-item="${item.id}" data-field="actual"
                     onclick="BudgetView.editCell(this)">${this._formatNumber(d.actual)}</td>`;
     }
 
@@ -312,9 +339,9 @@ const BudgetView = {
       const md = DataStore.ensureMonthData(mk);
       const actualData = md.expense[billingKey] || { expected: 0, actual: 0 };
 
-      cells += `<td class="cell expected card-linked${even}" data-tooltip="${card.name}" data-card-id="${card.id}" data-month="${mk}"
+      if (this._showExpected) cells += `<td class="cell expected card-linked${even}" data-tooltip="${card.name}" data-card-id="${card.id}" data-month="${mk}"
                     onclick="App.navigateToCard('${card.id}', '${mk}')">${this._formatNumber(billing)}</td>`;
-      cells += `<td class="cell actual${even}" data-tooltip="${card.name}" data-month="${mk}" data-type="expense" data-item="${billingKey}" data-field="actual"
+      if (this._showActual) cells += `<td class="cell actual${even}" data-tooltip="${card.name}" data-month="${mk}" data-type="expense" data-item="${billingKey}" data-field="actual"
                     onclick="BudgetView.editCell(this)">${this._formatNumber(actualData.actual)}</td>`;
     }
 
@@ -345,9 +372,9 @@ const BudgetView = {
       const md = DataStore.ensureMonthData(mk);
       const actualData = md.expense[paymentKey] || { expected: 0, actual: 0 };
 
-      cells += `<td class="cell expected loan-linked${even}" data-tooltip="${loan.name}" data-loan-id="${loan.id}" data-month="${mk}"
+      if (this._showExpected) cells += `<td class="cell expected loan-linked${even}" data-tooltip="${loan.name}" data-loan-id="${loan.id}" data-month="${mk}"
                     onclick="App.navigateToLoan('${loan.id}', '${mk}')">${this._formatNumber(payment)}</td>`;
-      cells += `<td class="cell actual${even}" data-tooltip="${loan.name}" data-month="${mk}" data-type="expense" data-item="${paymentKey}" data-field="actual"
+      if (this._showActual) cells += `<td class="cell actual${even}" data-tooltip="${loan.name}" data-month="${mk}" data-type="expense" data-item="${paymentKey}" data-field="actual"
                     onclick="BudgetView.editCell(this)">${this._formatNumber(actualData.actual)}</td>`;
     }
 
@@ -378,9 +405,9 @@ const BudgetView = {
       const md = DataStore.ensureMonthData(mk);
       const actualData = md.income[incomeKey] || { expected: 0, actual: 0 };
 
-      cells += `<td class="cell expected stock-linked${even}" data-tooltip="${stock.name}" data-stock-id="${stock.id}" data-month="${mk}"
+      if (this._showExpected) cells += `<td class="cell expected stock-linked${even}" data-tooltip="${stock.name}" data-stock-id="${stock.id}" data-month="${mk}"
                     onclick="App.navigateToStock('${stock.id}', '${mk}')">${this._formatNumber(income)}</td>`;
-      cells += `<td class="cell actual${even}" data-tooltip="${stock.name}" data-month="${mk}" data-type="income" data-item="${incomeKey}" data-field="actual"
+      if (this._showActual) cells += `<td class="cell actual${even}" data-tooltip="${stock.name}" data-month="${mk}" data-type="income" data-item="${incomeKey}" data-field="actual"
                     onclick="BudgetView.editCell(this)">${this._formatNumber(actualData.actual)}</td>`;
     }
 
@@ -400,8 +427,8 @@ const BudgetView = {
       const totals = DataStore.getMonthTotals(mk);
       const exp = type === 'income' ? totals.incomeExpected : totals.expenseExpected;
       const act = type === 'income' ? totals.incomeActual : totals.expenseActual;
-      cells += `<td class="cell total expected${even}">${this._formatNumber(exp)}</td>`;
-      cells += `<td class="cell total actual${even}">${this._formatNumber(act)}</td>`;
+      if (this._showExpected) cells += `<td class="cell total expected${even}">${this._formatNumber(exp)}</td>`;
+      if (this._showActual) cells += `<td class="cell total actual${even}">${this._formatNumber(act)}</td>`;
     }
 
     tr.innerHTML = cells;
@@ -420,8 +447,8 @@ const BudgetView = {
       const totals = DataStore.getMonthTotals(mk);
       const balExp = totals.balanceExpected;
       const balAct = totals.balanceActual;
-      cells += `<td class="cell balance expected${even} ${balExp >= 0 ? 'positive' : 'negative'}">${this._formatNumber(balExp)}</td>`;
-      cells += `<td class="cell balance actual${even} ${balAct >= 0 ? 'positive' : 'negative'}">${this._formatNumber(balAct)}</td>`;
+      if (this._showExpected) cells += `<td class="cell balance expected${even} ${balExp >= 0 ? 'positive' : 'negative'}">${this._formatNumber(balExp)}</td>`;
+      if (this._showActual) cells += `<td class="cell balance actual${even} ${balAct >= 0 ? 'positive' : 'negative'}">${this._formatNumber(balAct)}</td>`;
     }
 
     tr.innerHTML = cells;
@@ -474,19 +501,27 @@ const BudgetView = {
 
     const monthKeys = DataStore.getMonthKeys();
 
+    const bothVisible = this._showExpected && this._showActual;
     const updateRow = (row, getExp, getAct, formatClass) => {
       if (!row) return;
       const cells = row.querySelectorAll('.cell');
       for (let i = 0; i < monthKeys.length; i++) {
         const exp = getExp(monthKeys[i]);
         const act = getAct(monthKeys[i]);
-        const expCell = cells[i * 2];
-        const actCell = cells[i * 2 + 1];
-        if (expCell) expCell.textContent = this._formatNumber(exp);
-        if (actCell) actCell.textContent = this._formatNumber(act);
-        if (formatClass) {
-          if (expCell) { expCell.classList.toggle('positive', exp >= 0); expCell.classList.toggle('negative', exp < 0); }
-          if (actCell) { actCell.classList.toggle('positive', act >= 0); actCell.classList.toggle('negative', act < 0); }
+        if (bothVisible) {
+          const expCell = cells[i * 2];
+          const actCell = cells[i * 2 + 1];
+          if (expCell) expCell.textContent = this._formatNumber(exp);
+          if (actCell) actCell.textContent = this._formatNumber(act);
+          if (formatClass) {
+            if (expCell) { expCell.classList.toggle('positive', exp >= 0); expCell.classList.toggle('negative', exp < 0); }
+            if (actCell) { actCell.classList.toggle('positive', act >= 0); actCell.classList.toggle('negative', act < 0); }
+          }
+        } else {
+          const cell = cells[i];
+          const val = this._showExpected ? exp : act;
+          if (cell) cell.textContent = this._formatNumber(val);
+          if (formatClass && cell) { cell.classList.toggle('positive', val >= 0); cell.classList.toggle('negative', val < 0); }
         }
       }
     };

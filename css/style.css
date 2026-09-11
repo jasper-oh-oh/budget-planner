@@ -86,7 +86,25 @@ body {
 .toolbar {
   display: flex;
   gap: 8px;
+  align-items: center;
   margin-bottom: 12px;
+}
+
+.toolbar-sep {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  margin: 0 4px;
+}
+
+.btn-toggle {
+  opacity: 0.4;
+}
+
+.btn-toggle-active {
+  opacity: 1;
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .btn {

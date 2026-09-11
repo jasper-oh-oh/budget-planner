@@ -237,9 +237,9 @@ const BudgetView = {
       const md = DataStore.ensureMonthData(mk);
       const section = type === 'income' ? md.income : md.expense;
       const d = section[item.id] || { expected: 0, actual: 0 };
-      cells += `<td class="cell expected" title="${item.name}" data-month="${mk}" data-type="${type}" data-item="${item.id}" data-field="expected"
+      cells += `<td class="cell expected" data-tooltip="${item.name}" data-month="${mk}" data-type="${type}" data-item="${item.id}" data-field="expected"
                     onclick="BudgetView.editCell(this)">${this._formatNumber(d.expected)}</td>`;
-      cells += `<td class="cell actual" title="${item.name}" data-month="${mk}" data-type="${type}" data-item="${item.id}" data-field="actual"
+      cells += `<td class="cell actual" data-tooltip="${item.name}" data-month="${mk}" data-type="${type}" data-item="${item.id}" data-field="actual"
                     onclick="BudgetView.editCell(this)">${this._formatNumber(d.actual)}</td>`;
     }
 
@@ -268,9 +268,9 @@ const BudgetView = {
       const md = DataStore.ensureMonthData(mk);
       const actualData = md.expense[billingKey] || { expected: 0, actual: 0 };
 
-      cells += `<td class="cell expected card-linked" title="${card.name}" data-card-id="${card.id}" data-month="${mk}"
+      cells += `<td class="cell expected card-linked" data-tooltip="${card.name}" data-card-id="${card.id}" data-month="${mk}"
                     onclick="App.navigateToCard('${card.id}', '${mk}')">${this._formatNumber(billing)}</td>`;
-      cells += `<td class="cell actual" title="${card.name}" data-month="${mk}" data-type="expense" data-item="${billingKey}" data-field="actual"
+      cells += `<td class="cell actual" data-tooltip="${card.name}" data-month="${mk}" data-type="expense" data-item="${billingKey}" data-field="actual"
                     onclick="BudgetView.editCell(this)">${this._formatNumber(actualData.actual)}</td>`;
     }
 
@@ -299,9 +299,9 @@ const BudgetView = {
       const md = DataStore.ensureMonthData(mk);
       const actualData = md.expense[paymentKey] || { expected: 0, actual: 0 };
 
-      cells += `<td class="cell expected loan-linked" title="${loan.name}" data-loan-id="${loan.id}" data-month="${mk}"
+      cells += `<td class="cell expected loan-linked" data-tooltip="${loan.name}" data-loan-id="${loan.id}" data-month="${mk}"
                     onclick="App.navigateToLoan('${loan.id}', '${mk}')">${this._formatNumber(payment)}</td>`;
-      cells += `<td class="cell actual" title="${loan.name}" data-month="${mk}" data-type="expense" data-item="${paymentKey}" data-field="actual"
+      cells += `<td class="cell actual" data-tooltip="${loan.name}" data-month="${mk}" data-type="expense" data-item="${paymentKey}" data-field="actual"
                     onclick="BudgetView.editCell(this)">${this._formatNumber(actualData.actual)}</td>`;
     }
 
@@ -330,9 +330,9 @@ const BudgetView = {
       const md = DataStore.ensureMonthData(mk);
       const actualData = md.income[incomeKey] || { expected: 0, actual: 0 };
 
-      cells += `<td class="cell expected stock-linked" title="${stock.name}" data-stock-id="${stock.id}" data-month="${mk}"
+      cells += `<td class="cell expected stock-linked" data-tooltip="${stock.name}" data-stock-id="${stock.id}" data-month="${mk}"
                     onclick="App.navigateToStock('${stock.id}', '${mk}')">${this._formatNumber(income)}</td>`;
-      cells += `<td class="cell actual" title="${stock.name}" data-month="${mk}" data-type="income" data-item="${incomeKey}" data-field="actual"
+      cells += `<td class="cell actual" data-tooltip="${stock.name}" data-month="${mk}" data-type="income" data-item="${incomeKey}" data-field="actual"
                     onclick="BudgetView.editCell(this)">${this._formatNumber(actualData.actual)}</td>`;
     }
 

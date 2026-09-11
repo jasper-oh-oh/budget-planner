@@ -286,6 +286,28 @@ th.sticky-col {
 .income-section .section-title { color: var(--income); }
 .expense-section .section-title { color: var(--expense); }
 
+/* Tooltip */
+.cell[data-tooltip] {
+  position: relative;
+}
+
+.cell[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #222;
+  color: #fff;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 100;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
 /* Cells */
 .cell {
   cursor: pointer;

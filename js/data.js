@@ -154,6 +154,7 @@ const DataStore = {
     if (this._data.settings.payDayBase === undefined) this._data.settings.payDayBase = 25;
     for (const card of this._data.cards) {
       if (card.payDay === undefined) card.payDay = null;
+      if (card.baseMonth === undefined) card.baseMonth = '2026-09';
     }
     for (const loan of this._data.loans) {
       if (loan.payDay === undefined) loan.payDay = null;

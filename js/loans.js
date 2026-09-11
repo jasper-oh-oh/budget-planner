@@ -30,6 +30,7 @@ const LoansView = {
         <span>기간: <strong>${loan.termYears}년</strong></span>
         <span>상환: <strong>${REPAYMENT_LABELS[loan.repaymentType]}</strong></span>
         <span>실행: <strong>${loan.startYear}.${String(loan.startMonth).padStart(2, '0')}</strong></span>
+        <span>납부일: <strong>${loan.payDay ? loan.payDay + '일' : '-'}</strong></span>
         ${loan.rateType === 'variable' ? `<button class="btn btn-sm btn-rate-history" onclick="LoansView.openRateHistory('${loan.id}')">금리 이력</button>` : ''}
         <button class="btn btn-sm" onclick="LoansView.editLoan('${loan.id}')">설정</button>
         <button class="btn btn-sm btn-danger" onclick="LoansView.removeLoan('${loan.id}')">삭제</button>
@@ -114,7 +115,10 @@ const LoansView = {
     const rateIdx = prompt('금리 유형:\n1. 고정금리\n2. 변동금리\n\n번호 입력:', '1');
     const rateType = rateIdx === '2' ? 'variable' : 'fixed';
 
-    DataStore.addLoan({ name, color, principal, startYear, startMonth, termYears, annualRate, repaymentType, rateType, rateOverrides: {} });
+    const payDayStr = prompt('납부일 (없으면 빈칸):', '');
+    const payDay = payDayStr ? Number(payDayStr) || null : null;
+
+    DataStore.addLoan({ name, color, principal, startYear, startMonth, termYears, annualRate, repaymentType, rateType, rateOverrides: {}, payDay });
     this._refresh();
   },
 
@@ -151,6 +155,11 @@ const LoansView = {
     const rateIdx = prompt(`금리 유형 (현재: ${loan.rateType === 'variable' ? '변동' : '고정'}):\n1. 고정금리\n2. 변동금리\n\n번호 입력 (변경 없으면 빈칸):`);
     if (rateIdx === '1') DataStore.updateLoanField(loanId, 'rateType', 'fixed');
     if (rateIdx === '2') DataStore.updateLoanField(loanId, 'rateType', 'variable');
+
+    const payDayStr = prompt('납부일:', loan.payDay || '');
+    if (payDayStr !== null) {
+      DataStore.updateLoanField(loanId, 'payDay', payDayStr.trim() === '' ? null : (Number(payDayStr) || null));
+    }
 
     this._refresh();
   },

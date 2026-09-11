@@ -208,6 +208,48 @@ th.sticky-col {
   z-index: 15;
 }
 
+.budget-table td.sticky-col {
+  background: var(--bg-card);
+}
+
+.budget-table .section-header td.sticky-col {
+  background: var(--bg-header);
+}
+
+.budget-table .income-total td.sticky-col {
+  background-color: var(--bg-card);
+  background-image: linear-gradient(rgba(76, 175, 80, 0.1), rgba(76, 175, 80, 0.1));
+}
+
+.budget-table .expense-total td.sticky-col {
+  background-color: var(--bg-card);
+  background-image: linear-gradient(rgba(244, 67, 54, 0.1), rgba(244, 67, 54, 0.1));
+}
+
+.budget-table .balance-row td.sticky-col {
+  background-color: var(--bg-card);
+  background-image: linear-gradient(rgba(79, 195, 247, 0.1), rgba(79, 195, 247, 0.1));
+}
+
+.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.sortable:hover {
+  color: var(--accent) !important;
+  background: rgba(79, 195, 247, 0.12) !important;
+}
+
+.sort-active {
+  color: var(--accent) !important;
+}
+
+.sort-active::after {
+  content: ' \25B2';
+  font-size: 9px;
+}
+
 .month-header {
   text-align: center;
   font-size: 12px;
@@ -220,8 +262,14 @@ th.sticky-col {
   min-width: 90px;
 }
 
-.sub-header.expected { background: rgba(33, 150, 243, 0.1); }
-.sub-header.actual { background: rgba(255, 152, 0, 0.1); }
+.sub-header.expected {
+  background-color: var(--bg-header);
+  background-image: linear-gradient(rgba(33, 150, 243, 0.1), rgba(33, 150, 243, 0.1));
+}
+.sub-header.actual {
+  background-color: var(--bg-header);
+  background-image: linear-gradient(rgba(255, 152, 0, 0.1), rgba(255, 152, 0, 0.1));
+}
 
 /* Section headers */
 .section-header {

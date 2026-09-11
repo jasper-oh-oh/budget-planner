@@ -1,4 +1,6 @@
 const BudgetView = {
+  _sortMode: 'default',
+
   render(container) {
     const data = DataStore.getData();
     const monthKeys = DataStore.getMonthKeys();
@@ -23,15 +25,31 @@ const BudgetView = {
 
     wrapper.appendChild(table);
     container.appendChild(wrapper);
+
+    const firstRow = table.querySelector('thead tr:first-child');
+    if (firstRow) {
+      const h = firstRow.offsetHeight;
+      table.querySelectorAll('thead tr:nth-child(2) th').forEach(th => {
+        th.style.top = h + 'px';
+      });
+    }
+  },
+
+  setSortMode(mode) {
+    if (this._sortMode === mode) return;
+    this._sortMode = mode;
+    this._refreshTotals();
   },
 
   _buildHeader(monthKeys) {
     const thead = document.createElement('thead');
+    const isPayDay = this._sortMode === 'payDay';
 
     const row1 = document.createElement('tr');
-    row1.innerHTML = '<th class="sticky-col col-category" rowspan="2">분류</th>' +
-      '<th class="sticky-col col-name" rowspan="2">항목</th>' +
-      '<th class="sticky-col col-payday" rowspan="2">납부일</th>';
+    row1.innerHTML =
+      `<th class="sticky-col col-category sortable" rowspan="2" onclick="BudgetView.setSortMode('default')">분류</th>` +
+      `<th class="sticky-col col-name sortable" rowspan="2" onclick="BudgetView.setSortMode('default')">항목</th>` +
+      `<th class="sticky-col col-payday sortable${isPayDay ? ' sort-active' : ''}" rowspan="2" onclick="BudgetView.setSortMode('payDay')">납부일</th>`;
     for (const mk of monthKeys) {
       row1.innerHTML += `<th colspan="2" class="month-header">${DataStore.getMonthLabel(mk)}</th>`;
     }
@@ -49,7 +67,7 @@ const BudgetView = {
   _buildBody(data, monthKeys) {
     const tbody = document.createElement('tbody');
 
-    // === 수입 섹션 ===
+    // === 수입 섹션 (항상 기본 순서) ===
     const incomeHeader = document.createElement('tr');
     incomeHeader.className = 'section-header income-section';
     incomeHeader.innerHTML = `<td class="sticky-col col-category section-title" colspan="3">수입</td>` +
@@ -57,7 +75,8 @@ const BudgetView = {
     tbody.appendChild(incomeHeader);
 
     for (const cat of INCOME_CATEGORIES) {
-      const items = data.incomeItems.filter(i => i.category === cat);
+      const items = data.incomeItems.filter(i => i.category === cat)
+        .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
       if (items.length === 0) continue;
       for (let idx = 0; idx < items.length; idx++) {
         tbody.appendChild(this._buildItemRow(items[idx], 'income', monthKeys, cat, idx === 0 ? items.length : 0));
@@ -73,26 +92,12 @@ const BudgetView = {
       monthKeys.map(() => '<td colspan="2"></td>').join('');
     tbody.appendChild(expenseHeader);
 
-    for (const cat of EXPENSE_CATEGORIES) {
-      if (cat === '카드대금') {
-        this._buildCardBillingRows(tbody, data, monthKeys);
-        continue;
-      }
-      if (cat === '대출') {
-        const manualItems = data.expenseItems.filter(i => i.category === '대출');
-        const loanCount = data.loans ? data.loans.length : 0;
-        const totalRows = manualItems.length + loanCount;
-        for (let idx = 0; idx < manualItems.length; idx++) {
-          tbody.appendChild(this._buildItemRow(manualItems[idx], 'expense', monthKeys, '대출', idx === 0 ? totalRows : 0));
-        }
-        this._buildLoanPaymentRows(tbody, data, monthKeys, manualItems.length === 0 ? 0 : -1);
-        continue;
-      }
-      const items = data.expenseItems.filter(i => i.category === cat);
-      if (items.length === 0) continue;
-      for (let idx = 0; idx < items.length; idx++) {
-        tbody.appendChild(this._buildItemRow(items[idx], 'expense', monthKeys, cat, idx === 0 ? items.length : 0));
-      }
+    const allExpense = this._collectExpenseItems(data);
+
+    if (this._sortMode === 'payDay') {
+      this._buildExpenseByPayDay(tbody, allExpense, monthKeys, data);
+    } else {
+      this._buildExpenseDefault(tbody, allExpense, monthKeys, data);
     }
 
     tbody.appendChild(this._buildTotalRow('지출합계', monthKeys, 'expense', 'expense-total'));
@@ -101,13 +106,97 @@ const BudgetView = {
     return tbody;
   },
 
+  _collectExpenseItems(data) {
+    const items = [];
+
+    for (const item of data.expenseItems) {
+      items.push({
+        category: item.category,
+        name: item.name,
+        payDay: item.payDay,
+        renderType: 'expense',
+        item: item
+      });
+    }
+
+    for (const card of data.cards) {
+      items.push({
+        category: '카드대금',
+        name: card.name,
+        payDay: card.payDay,
+        renderType: 'card',
+        card: card
+      });
+    }
+
+    for (const loan of (data.loans || [])) {
+      items.push({
+        category: '대출',
+        name: loan.name,
+        payDay: loan.payDay,
+        renderType: 'loan',
+        loan: loan
+      });
+    }
+
+    return items;
+  },
+
+  _buildExpenseDefault(tbody, allItems, monthKeys, data) {
+    for (const cat of EXPENSE_CATEGORIES) {
+      const catItems = allItems.filter(i => i.category === cat);
+      if (catItems.length === 0) continue;
+      catItems.sort((a, b) => a.name.localeCompare(b.name, 'ko') || (a.payDay || 999) - (b.payDay || 999));
+      for (let idx = 0; idx < catItems.length; idx++) {
+        const rowspan = idx === 0 ? catItems.length : 0;
+        tbody.appendChild(this._renderExpenseRow(catItems[idx], monthKeys, data, rowspan));
+      }
+    }
+  },
+
+  _buildExpenseByPayDay(tbody, allItems, monthKeys, data) {
+    const base = data.settings.payDayBase || 25;
+    const catOrder = {};
+    EXPENSE_CATEGORIES.forEach((c, i) => { catOrder[c] = i; });
+
+    allItems.sort((a, b) => {
+      const aKey = this._circularPayDayKey(a.payDay, base);
+      const bKey = this._circularPayDayKey(b.payDay, base);
+      if (aKey !== bKey) return aKey - bKey;
+      const aCat = catOrder[a.category] ?? 999;
+      const bCat = catOrder[b.category] ?? 999;
+      if (aCat !== bCat) return aCat - bCat;
+      return a.name.localeCompare(b.name, 'ko');
+    });
+
+    for (const entry of allItems) {
+      tbody.appendChild(this._renderExpenseRow(entry, monthKeys, data, 1));
+    }
+  },
+
+  _circularPayDayKey(payDay, base) {
+    if (payDay == null) return Infinity;
+    return ((payDay - base) % 31 + 31) % 31;
+  },
+
+  _renderExpenseRow(entry, monthKeys, data, rowspan) {
+    if (entry.renderType === 'card') {
+      return this._buildCardBillingRow(entry.card, monthKeys, data, rowspan, entry.category);
+    }
+    if (entry.renderType === 'loan') {
+      return this._buildLoanPaymentRow(entry.loan, monthKeys, data, rowspan, entry.category);
+    }
+    return this._buildItemRow(entry.item, 'expense', monthKeys, entry.category, rowspan);
+  },
+
   _buildItemRow(item, type, monthKeys, category, rowspan) {
     const tr = document.createElement('tr');
     tr.className = `item-row ${type}-row`;
 
     let cells = '';
     if (rowspan > 0) {
-      cells += `<td class="sticky-col col-category category-label" rowspan="${rowspan}">${category}</td>`;
+      const catClass = category === '카드대금' ? ' category-card' : (category === '대출' ? ' category-loan' : '');
+      cells += `<td class="sticky-col col-category category-label${catClass}" rowspan="${rowspan}">${category}</td>`;
     }
     cells += `<td class="sticky-col col-name item-name">
       <span class="item-label">${item.name}</span>
@@ -131,78 +220,66 @@ const BudgetView = {
     return tr;
   },
 
-  _buildCardBillingRows(tbody, data, monthKeys) {
-    const cards = data.cards;
-    if (cards.length === 0) return;
+  _buildCardBillingRow(card, monthKeys, data, rowspan, category) {
+    const sim = DataStore.simulateCard(card);
+    const tr = document.createElement('tr');
+    tr.className = 'item-row expense-row card-billing-row';
 
-    for (let idx = 0; idx < cards.length; idx++) {
-      const card = cards[idx];
-      const sim = DataStore.simulateCard(card);
-      const tr = document.createElement('tr');
-      tr.className = 'item-row expense-row card-billing-row';
-
-      let cells = '';
-      if (idx === 0) {
-        cells += `<td class="sticky-col col-category category-label category-card" rowspan="${cards.length}">카드대금</td>`;
-      }
-      cells += `<td class="sticky-col col-name item-name">
-        <span class="item-label" style="color:${card.color}">${card.name}</span>
-      </td>`;
-      cells += `<td class="sticky-col col-payday"></td>`;
-
-      for (const mk of monthKeys) {
-        const monthResult = sim.find(r => r.monthKey === mk);
-        const billing = monthResult ? monthResult.billing : 0;
-        const billingKey = 'card-billing-' + card.id;
-        const md = DataStore.ensureMonthData(mk);
-        const actualData = md.expense[billingKey] || { expected: 0, actual: 0 };
-
-        cells += `<td class="cell expected card-linked" data-card-id="${card.id}" data-month="${mk}"
-                      onclick="App.navigateToCard('${card.id}', '${mk}')">${this._formatNumber(billing)}</td>`;
-        cells += `<td class="cell actual" data-month="${mk}" data-type="expense" data-item="${billingKey}" data-field="actual"
-                      onclick="BudgetView.editCell(this)">${this._formatNumber(actualData.actual)}</td>`;
-      }
-
-      tr.innerHTML = cells;
-      tbody.appendChild(tr);
+    let cells = '';
+    if (rowspan > 0) {
+      cells += `<td class="sticky-col col-category category-label category-card" rowspan="${rowspan}">${category}</td>`;
     }
+    cells += `<td class="sticky-col col-name item-name">
+      <span class="item-label" style="color:${card.color}">${card.name}</span>
+    </td>`;
+    cells += `<td class="sticky-col col-payday">${card.payDay || ''}</td>`;
+
+    for (const mk of monthKeys) {
+      const monthResult = sim.find(r => r.monthKey === mk);
+      const billing = monthResult ? monthResult.billing : 0;
+      const billingKey = 'card-billing-' + card.id;
+      const md = DataStore.ensureMonthData(mk);
+      const actualData = md.expense[billingKey] || { expected: 0, actual: 0 };
+
+      cells += `<td class="cell expected card-linked" data-card-id="${card.id}" data-month="${mk}"
+                    onclick="App.navigateToCard('${card.id}', '${mk}')">${this._formatNumber(billing)}</td>`;
+      cells += `<td class="cell actual" data-month="${mk}" data-type="expense" data-item="${billingKey}" data-field="actual"
+                    onclick="BudgetView.editCell(this)">${this._formatNumber(actualData.actual)}</td>`;
+    }
+
+    tr.innerHTML = cells;
+    return tr;
   },
 
-  _buildLoanPaymentRows(tbody, data, monthKeys, categoryRowspanHandled) {
-    const loans = data.loans || [];
-    if (loans.length === 0) return;
+  _buildLoanPaymentRow(loan, monthKeys, data, rowspan, category) {
+    const sim = DataStore.simulateLoan(loan);
+    const tr = document.createElement('tr');
+    tr.className = 'item-row expense-row loan-payment-row';
 
-    for (let idx = 0; idx < loans.length; idx++) {
-      const loan = loans[idx];
-      const sim = DataStore.simulateLoan(loan);
-      const tr = document.createElement('tr');
-      tr.className = 'item-row expense-row loan-payment-row';
-
-      let cells = '';
-      if (categoryRowspanHandled === 0 && idx === 0) {
-        cells += `<td class="sticky-col col-category category-label category-loan" rowspan="${loans.length}">대출</td>`;
-      }
-      cells += `<td class="sticky-col col-name item-name">
-        <span class="item-label" style="color:${loan.color}">${loan.name}</span>
-      </td>`;
-      cells += `<td class="sticky-col col-payday"></td>`;
-
-      for (const mk of monthKeys) {
-        const monthResult = sim.find(r => r.monthKey === mk);
-        const payment = monthResult ? monthResult.payment : 0;
-        const paymentKey = 'loan-payment-' + loan.id;
-        const md = DataStore.ensureMonthData(mk);
-        const actualData = md.expense[paymentKey] || { expected: 0, actual: 0 };
-
-        cells += `<td class="cell expected loan-linked" data-loan-id="${loan.id}" data-month="${mk}"
-                      onclick="App.navigateToLoan('${loan.id}', '${mk}')">${this._formatNumber(payment)}</td>`;
-        cells += `<td class="cell actual" data-month="${mk}" data-type="expense" data-item="${paymentKey}" data-field="actual"
-                      onclick="BudgetView.editCell(this)">${this._formatNumber(actualData.actual)}</td>`;
-      }
-
-      tr.innerHTML = cells;
-      tbody.appendChild(tr);
+    let cells = '';
+    if (rowspan > 0) {
+      cells += `<td class="sticky-col col-category category-label category-loan" rowspan="${rowspan}">${category}</td>`;
     }
+    cells += `<td class="sticky-col col-name item-name">
+      <span class="item-label" style="color:${loan.color}">${loan.name}</span>
+    </td>`;
+    cells += `<td class="sticky-col col-payday">${loan.payDay || ''}</td>`;
+
+    for (const mk of monthKeys) {
+      const monthResult = sim.find(r => r.monthKey === mk);
+      const payment = monthResult ? monthResult.payment : 0;
+      const paymentKey = 'loan-payment-' + loan.id;
+      const md = DataStore.ensureMonthData(mk);
+      const actualData = md.expense[paymentKey] || { expected: 0, actual: 0 };
+
+      cells += `<td class="cell expected loan-linked" data-loan-id="${loan.id}" data-month="${mk}"
+                    onclick="App.navigateToLoan('${loan.id}', '${mk}')">${this._formatNumber(payment)}</td>`;
+      cells += `<td class="cell actual" data-month="${mk}" data-type="expense" data-item="${paymentKey}" data-field="actual"
+                    onclick="BudgetView.editCell(this)">${this._formatNumber(actualData.actual)}</td>`;
+    }
+
+    tr.innerHTML = cells;
+    return tr;
   },
 
   _buildTotalRow(label, monthKeys, type, className) {

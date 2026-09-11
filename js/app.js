@@ -102,6 +102,10 @@ const App = {
           <label>기간(개월):</label>
           <input type="number" id="set-months" value="${s.months}" min="1" max="60">
         </div>
+        <div class="settings-row">
+          <label>납부일 기준:</label>
+          <input type="number" id="set-payday-base" value="${s.payDayBase || 25}" min="1" max="31">
+        </div>
         <button class="btn" onclick="App.saveSettings()">설정 저장</button>
 
         <hr>
@@ -169,7 +173,8 @@ const App = {
     const startYear = Number(document.getElementById('set-start-year').value);
     const startMonth = Number(document.getElementById('set-start-month').value);
     const months = Number(document.getElementById('set-months').value);
-    DataStore.updateSettings({ startYear, startMonth, months });
+    const payDayBase = Number(document.getElementById('set-payday-base').value) || 25;
+    DataStore.updateSettings({ startYear, startMonth, months, payDayBase });
     alert('설정이 저장되었습니다.');
     this.switchTab('settings');
   },

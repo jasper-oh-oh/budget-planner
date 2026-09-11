@@ -7,7 +7,8 @@ const DEFAULT_DATA = {
   settings: {
     startMonth: 9,
     startYear: 2025,
-    months: 13
+    months: 13,
+    payDayBase: 25
   },
   incomeItems: [
     { id: 'inc-1', name: '급여', category: '급여', defaultAmount: 0 },
@@ -43,6 +44,7 @@ const DEFAULT_DATA = {
       minPaymentRatio: 0.1,
       interestRate: 0.196,
       initialCarryOver: 28000000,
+      payDay: null,
       monthlyOverrides: {}
     },
     {
@@ -53,6 +55,7 @@ const DEFAULT_DATA = {
       minPaymentRatio: 0.1,
       interestRate: 0.192,
       initialCarryOver: 10450202,
+      payDay: null,
       monthlyOverrides: {}
     },
     {
@@ -63,6 +66,7 @@ const DEFAULT_DATA = {
       minPaymentRatio: 0.2,
       interestRate: 0.1442,
       initialCarryOver: 1000000,
+      payDay: null,
       monthlyOverrides: {}
     }
   ],
@@ -71,31 +75,31 @@ const DEFAULT_DATA = {
       id: 'loan-1', name: '농협 주택담보대출', color: '#4CAF50',
       principal: 300000000, startYear: 2019, startMonth: 4,
       termYears: 30, annualRate: 0.035, repaymentType: 'amortized',
-      rateType: 'variable', rateOverrides: {}
+      rateType: 'variable', rateOverrides: {}, payDay: null
     },
     {
       id: 'loan-2', name: '하나은행 신용대출(1)', color: '#03A9F4',
       principal: 120000000, startYear: 2025, startMonth: 8,
       termYears: 1, annualRate: 0.05, repaymentType: 'bullet',
-      rateType: 'fixed', rateOverrides: {}
+      rateType: 'fixed', rateOverrides: {}, payDay: null
     },
     {
       id: 'loan-3', name: '하나은행 신용대출(2)', color: '#29B6F6',
       principal: 8000000, startYear: 2025, startMonth: 8,
       termYears: 1, annualRate: 0.05, repaymentType: 'bullet',
-      rateType: 'fixed', rateOverrides: {}
+      rateType: 'fixed', rateOverrides: {}, payDay: null
     },
     {
       id: 'loan-4', name: 'BMW 자동차할부', color: '#607D8B',
       principal: 35000000, startYear: 2022, startMonth: 7,
       termYears: 7, annualRate: 0.04, repaymentType: 'amortized',
-      rateType: 'fixed', rateOverrides: {}
+      rateType: 'fixed', rateOverrides: {}, payDay: null
     },
     {
       id: 'loan-5', name: '현대캐피탈 자동차할부', color: '#FF7043',
       principal: 20000000, startYear: 2025, startMonth: 4,
       termYears: 5, annualRate: 0.05, repaymentType: 'amortized',
-      rateType: 'fixed', rateOverrides: {}
+      rateType: 'fixed', rateOverrides: {}, payDay: null
     }
   ]
 };
@@ -137,6 +141,13 @@ const DataStore = {
       if (!loan.rateType) loan.rateType = 'fixed';
       if (!loan.rateOverrides) loan.rateOverrides = {};
       if (!loan.rateHistory) loan.rateHistory = [];
+    }
+    if (this._data.settings.payDayBase === undefined) this._data.settings.payDayBase = 25;
+    for (const card of this._data.cards) {
+      if (card.payDay === undefined) card.payDay = null;
+    }
+    for (const loan of this._data.loans) {
+      if (loan.payDay === undefined) loan.payDay = null;
     }
     for (const item of this._data.incomeItems) {
       if (!item.category) item.category = INCOME_CATEGORIES[0];
@@ -320,11 +331,12 @@ const DataStore = {
     this.save();
   },
 
-  addCard(name, monthlyUsage, minPaymentRatio, interestRate, initialCarryOver, color) {
+  addCard(name, monthlyUsage, minPaymentRatio, interestRate, initialCarryOver, color, payDay) {
     const id = 'card-' + Date.now();
     this._data.cards.push({
       id, name, color: color || '#999',
       monthlyUsage, minPaymentRatio, interestRate, initialCarryOver,
+      payDay: payDay || null,
       monthlyOverrides: {}
     });
     this.save();

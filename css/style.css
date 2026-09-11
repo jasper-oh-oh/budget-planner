@@ -330,6 +330,30 @@ th.sticky-col {
   color: var(--accent);
 }
 
+.cell.stock-linked {
+  cursor: pointer;
+  background: rgba(233, 30, 99, 0.06);
+  color: #E91E63;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 3px;
+}
+
+.cell.stock-linked:hover {
+  background: rgba(233, 30, 99, 0.15);
+}
+
+.category-stock {
+  color: #E91E63;
+}
+
+.empty-message {
+  text-align: center;
+  color: var(--text-dim);
+  padding: 40px 20px;
+  font-size: 14px;
+}
+
 .focus-highlight {
   background: rgba(79, 195, 247, 0.2) !important;
   transition: background 0.3s;

@@ -74,12 +74,18 @@ const BudgetView = {
       monthKeys.map(() => '<td colspan="2"></td>').join('');
     tbody.appendChild(incomeHeader);
 
+    const allIncome = this._collectIncomeItems(data);
     for (const cat of INCOME_CATEGORIES) {
-      const items = data.incomeItems.filter(i => i.category === cat)
-        .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
-      if (items.length === 0) continue;
-      for (let idx = 0; idx < items.length; idx++) {
-        tbody.appendChild(this._buildItemRow(items[idx], 'income', monthKeys, cat, idx === 0 ? items.length : 0));
+      const catItems = allIncome.filter(i => i.category === cat);
+      if (catItems.length === 0) continue;
+      for (let idx = 0; idx < catItems.length; idx++) {
+        const rowspan = idx === 0 ? catItems.length : 0;
+        const entry = catItems[idx];
+        if (entry.renderType === 'stock') {
+          tbody.appendChild(this._buildStockIncomeRow(entry.stock, monthKeys, data, rowspan, cat));
+        } else {
+          tbody.appendChild(this._buildItemRow(entry.item, 'income', monthKeys, cat, rowspan));
+        }
       }
     }
 
@@ -104,6 +110,27 @@ const BudgetView = {
     tbody.appendChild(this._buildBalanceRow(monthKeys));
 
     return tbody;
+  },
+
+  _collectIncomeItems(data) {
+    const items = [];
+    for (const item of data.incomeItems) {
+      items.push({
+        category: item.category,
+        name: item.name,
+        renderType: 'income',
+        item: item
+      });
+    }
+    for (const stock of (data.stocks || [])) {
+      items.push({
+        category: '주식',
+        name: stock.name,
+        renderType: 'stock',
+        stock: stock
+      });
+    }
+    return items;
   },
 
   _collectExpenseItems(data) {
@@ -282,6 +309,37 @@ const BudgetView = {
     return tr;
   },
 
+  _buildStockIncomeRow(stock, monthKeys, data, rowspan, category) {
+    const sim = DataStore.simulateStock(stock);
+    const tr = document.createElement('tr');
+    tr.className = 'item-row income-row stock-income-row';
+
+    let cells = '';
+    if (rowspan > 0) {
+      cells += `<td class="sticky-col col-category category-label category-stock" rowspan="${rowspan}">${category}</td>`;
+    }
+    cells += `<td class="sticky-col col-name item-name">
+      <span class="item-label" style="color:${stock.color}">${stock.name}</span>
+    </td>`;
+    cells += `<td class="sticky-col col-payday"></td>`;
+
+    for (const mk of monthKeys) {
+      const monthResult = sim.find(r => r.monthKey === mk);
+      const income = monthResult ? monthResult.sellAmount : 0;
+      const incomeKey = 'stock-income-' + stock.id;
+      const md = DataStore.ensureMonthData(mk);
+      const actualData = md.income[incomeKey] || { expected: 0, actual: 0 };
+
+      cells += `<td class="cell expected stock-linked" data-stock-id="${stock.id}" data-month="${mk}"
+                    onclick="App.navigateToStock('${stock.id}', '${mk}')">${this._formatNumber(income)}</td>`;
+      cells += `<td class="cell actual" data-month="${mk}" data-type="income" data-item="${incomeKey}" data-field="actual"
+                    onclick="BudgetView.editCell(this)">${this._formatNumber(actualData.actual)}</td>`;
+    }
+
+    tr.innerHTML = cells;
+    return tr;
+  },
+
   _buildTotalRow(label, monthKeys, type, className) {
     const tr = document.createElement('tr');
     tr.className = `total-row ${className}`;
@@ -337,7 +395,7 @@ const BudgetView = {
         e.preventDefault();
         input.blur();
         const next = e.shiftKey ? td.previousElementSibling : td.nextElementSibling;
-        if (next && next.classList.contains('cell') && !next.classList.contains('card-linked')) {
+        if (next && next.classList.contains('cell') && !next.classList.contains('card-linked') && !next.classList.contains('stock-linked')) {
           next.click();
         }
       }
@@ -374,7 +432,7 @@ const BudgetView = {
   },
 
   addItem(type) {
-    const categories = type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES.filter(c => c !== '카드대금');
+    const categories = type === 'income' ? INCOME_CATEGORIES.filter(c => c !== '주식') : EXPENSE_CATEGORIES.filter(c => c !== '카드대금');
     const catIdx = prompt(
       `${type === 'income' ? '수입' : '지출'} 분류를 선택하세요:\n` +
       categories.map((c, i) => `${i + 1}. ${c}`).join('\n') +

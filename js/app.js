@@ -71,6 +71,9 @@ const App = {
       case 'loans':
         LoansView.render(container);
         break;
+      case 'stocks':
+        StocksView.render(container);
+        break;
       case 'dashboard':
         DashboardView.render(container);
         break;
@@ -164,6 +167,13 @@ const App = {
     this.switchTab('loans');
     requestAnimationFrame(() => {
       LoansView.focusLoanMonth(loanId, monthKey);
+    });
+  },
+
+  navigateToStock(stockId, monthKey) {
+    this.switchTab('stocks');
+    requestAnimationFrame(() => {
+      StocksView.focusStockMonth(stockId, monthKey);
     });
   },
 

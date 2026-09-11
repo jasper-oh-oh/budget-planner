@@ -1,6 +1,6 @@
 const STORAGE_KEY = 'financial-management-data';
 
-const INCOME_CATEGORIES = ['급여', '부수입'];
+const INCOME_CATEGORIES = ['급여', '부수입', '주식'];
 const EXPENSE_CATEGORIES = ['주거비', '보험', '교육', '생활비', '대출', '투자/저축', '카드대금'];
 
 const DEFAULT_DATA = {
@@ -101,7 +101,8 @@ const DEFAULT_DATA = {
       termYears: 5, annualRate: 0.05, repaymentType: 'amortized',
       rateType: 'fixed', rateOverrides: {}, payDay: null
     }
-  ]
+  ],
+  stocks: []
 };
 
 const REPAYMENT_LABELS = {
@@ -141,6 +142,11 @@ const DataStore = {
       if (!loan.rateType) loan.rateType = 'fixed';
       if (!loan.rateOverrides) loan.rateOverrides = {};
       if (!loan.rateHistory) loan.rateHistory = [];
+    }
+    if (!this._data.stocks) this._data.stocks = [];
+    for (const stock of this._data.stocks) {
+      if (stock.initialHoldingQty === undefined) stock.initialHoldingQty = 0;
+      if (stock.initialAvgPrice === undefined) stock.initialAvgPrice = 0;
     }
     if (this._data.settings.payDayBase === undefined) this._data.settings.payDayBase = 25;
     for (const card of this._data.cards) {
@@ -286,6 +292,10 @@ const DataStore = {
     const loanPaymentAct = this.getLoanActualForMonth(monthKey);
     expenseExp += loanPaymentExp;
     expenseAct += loanPaymentAct;
+    const stockIncomeExp = this.getStockIncomeTotal(monthKey);
+    const stockIncomeAct = this.getStockActualForMonth(monthKey);
+    incomeExp += stockIncomeExp;
+    incomeAct += stockIncomeAct;
     return {
       incomeExpected: incomeExp,
       incomeActual: incomeAct,
@@ -559,6 +569,123 @@ const DataStore = {
     for (const loan of this._data.loans) {
       const key = 'loan-payment-' + loan.id;
       const d = md.expense[key];
+      if (d) total += d.actual;
+    }
+    return total;
+  },
+
+  // === Stock methods ===
+
+  addStock(name, color, initialHoldingQty, initialAvgPrice) {
+    const id = 'stock-' + Date.now();
+    this._data.stocks.push({
+      id, name, color: color || '#E91E63',
+      initialHoldingQty: initialHoldingQty || 0,
+      initialAvgPrice: initialAvgPrice || 0,
+      monthlyOverrides: {}
+    });
+    this.save();
+    return id;
+  },
+
+  removeStock(id) {
+    this._data.stocks = this._data.stocks.filter(s => s.id !== id);
+    this.save();
+  },
+
+  updateStockField(stockId, field, value) {
+    const stock = this._data.stocks.find(s => s.id === stockId);
+    if (stock) { stock[field] = value; this.save(); }
+  },
+
+  setStockMonthlyOverride(stockId, monthKey, field, value) {
+    const stock = this._data.stocks.find(s => s.id === stockId);
+    if (!stock) return;
+    if (!stock.monthlyOverrides[monthKey]) stock.monthlyOverrides[monthKey] = {};
+    stock.monthlyOverrides[monthKey][field] = value;
+    this.save();
+  },
+
+  _applyStockMonth(stock, mk, holdingQty, avgPrice) {
+    const o = stock.monthlyOverrides[mk] || {};
+    const buyQty = o.buyQty || 0;
+    const buyPrice = o.buyPrice || 0;
+    const sellQty = Math.min(o.sellQty || 0, holdingQty + buyQty);
+    const sellPrice = o.sellPrice || 0;
+
+    if (buyQty > 0 && buyPrice > 0) {
+      const totalCost = holdingQty * avgPrice + buyQty * buyPrice;
+      holdingQty += buyQty;
+      avgPrice = holdingQty > 0 ? totalCost / holdingQty : 0;
+    }
+
+    const sellAmount = sellQty * sellPrice;
+    if (sellQty > 0) holdingQty -= sellQty;
+
+    return { buyQty, buyPrice, sellQty, sellPrice, sellAmount, holdingQty, avgPrice };
+  },
+
+  simulateStock(stock) {
+    const monthKeys = this.getMonthKeys();
+    const firstKey = monthKeys[0];
+    let holdingQty = stock.initialHoldingQty || 0;
+    let avgPrice = stock.initialAvgPrice || 0;
+
+    const preKeys = Object.keys(stock.monthlyOverrides)
+      .filter(k => k < firstKey)
+      .sort();
+    for (const pk of preKeys) {
+      const r = this._applyStockMonth(stock, pk, holdingQty, avgPrice);
+      holdingQty = r.holdingQty;
+      avgPrice = r.avgPrice;
+    }
+
+    const results = [];
+    for (const mk of monthKeys) {
+      const r = this._applyStockMonth(stock, mk, holdingQty, avgPrice);
+      holdingQty = r.holdingQty;
+      avgPrice = r.avgPrice;
+
+      results.push({
+        monthKey: mk,
+        buyQty: r.buyQty,
+        buyPrice: r.buyPrice,
+        buyAmount: r.buyQty * r.buyPrice,
+        sellQty: r.sellQty,
+        sellPrice: r.sellPrice,
+        sellAmount: r.sellAmount,
+        holdingQty,
+        totalInvested: Math.round(holdingQty * avgPrice)
+      });
+    }
+    return results;
+  },
+
+  getStockIncomeForMonth(monthKey) {
+    const incomes = [];
+    for (const stock of this._data.stocks) {
+      const sim = this.simulateStock(stock);
+      const monthResult = sim.find(r => r.monthKey === monthKey);
+      incomes.push({
+        stockId: stock.id,
+        stockName: stock.name,
+        color: stock.color,
+        income: monthResult ? monthResult.sellAmount : 0
+      });
+    }
+    return incomes;
+  },
+
+  getStockIncomeTotal(monthKey) {
+    return this.getStockIncomeForMonth(monthKey).reduce((sum, s) => sum + s.income, 0);
+  },
+
+  getStockActualForMonth(monthKey) {
+    const md = this.ensureMonthData(monthKey);
+    let total = 0;
+    for (const stock of this._data.stocks) {
+      const key = 'stock-income-' + stock.id;
+      const d = md.income[key];
       if (d) total += d.actual;
     }
     return total;

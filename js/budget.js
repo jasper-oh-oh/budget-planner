@@ -70,7 +70,13 @@ const BudgetView = {
   setSortMode(mode) {
     if (this._sortMode === mode) return;
     this._sortMode = mode;
-    this._refreshTotals();
+    const container = document.getElementById('tab-budget');
+    const wrapper = container && container.querySelector('.table-wrapper');
+    const scrollLeft = wrapper ? wrapper.scrollLeft : 0;
+    const scrollTop = wrapper ? wrapper.scrollTop : 0;
+    this.render(container);
+    const newWrapper = container.querySelector('.table-wrapper');
+    if (newWrapper) { newWrapper.scrollLeft = scrollLeft; newWrapper.scrollTop = scrollTop; }
   },
 
   _buildHeader(monthKeys) {
@@ -448,7 +454,42 @@ const BudgetView = {
 
   _refreshTotals() {
     const container = document.getElementById('tab-budget');
-    if (container) this.render(container);
+    if (!container) return;
+    const table = container.querySelector('.budget-table');
+    if (!table) { this.render(container); return; }
+
+    const monthKeys = DataStore.getMonthKeys();
+
+    const updateRow = (row, getExp, getAct, formatClass) => {
+      if (!row) return;
+      const cells = row.querySelectorAll('.cell');
+      for (let i = 0; i < monthKeys.length; i++) {
+        const exp = getExp(monthKeys[i]);
+        const act = getAct(monthKeys[i]);
+        const expCell = cells[i * 2];
+        const actCell = cells[i * 2 + 1];
+        if (expCell) expCell.textContent = this._formatNumber(exp);
+        if (actCell) actCell.textContent = this._formatNumber(act);
+        if (formatClass) {
+          if (expCell) { expCell.classList.toggle('positive', exp >= 0); expCell.classList.toggle('negative', exp < 0); }
+          if (actCell) { actCell.classList.toggle('positive', act >= 0); actCell.classList.toggle('negative', act < 0); }
+        }
+      }
+    };
+
+    const incomeTotal = table.querySelector('.income-total');
+    const expenseTotal = table.querySelector('.expense-total');
+    const balanceRow = table.querySelector('.balance-row');
+
+    updateRow(incomeTotal,
+      mk => DataStore.getMonthTotals(mk).incomeExpected,
+      mk => DataStore.getMonthTotals(mk).incomeActual);
+    updateRow(expenseTotal,
+      mk => DataStore.getMonthTotals(mk).expenseExpected,
+      mk => DataStore.getMonthTotals(mk).expenseActual);
+    updateRow(balanceRow,
+      mk => DataStore.getMonthTotals(mk).balanceExpected,
+      mk => DataStore.getMonthTotals(mk).balanceActual, true);
   },
 
   _formatNumber(num) {

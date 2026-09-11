@@ -88,14 +88,16 @@ const BudgetView = {
       `<th class="sticky-col col-category sortable" rowspan="2" onclick="BudgetView.setSortMode('default')">분류</th>` +
       `<th class="sticky-col col-name sortable" rowspan="2" onclick="BudgetView.setSortMode('default')">항목</th>` +
       `<th class="sticky-col col-payday sortable${isPayDay ? ' sort-active' : ''}" rowspan="2" onclick="BudgetView.setSortMode('payDay')">납부일</th>`;
-    for (const mk of monthKeys) {
-      row1.innerHTML += `<th colspan="2" class="month-header">${DataStore.getMonthLabel(mk)}</th>`;
+    for (let i = 0; i < monthKeys.length; i++) {
+      const even = i % 2 === 0 ? ' month-even' : '';
+      row1.innerHTML += `<th colspan="2" class="month-header${even}">${DataStore.getMonthLabel(monthKeys[i])}</th>`;
     }
     thead.appendChild(row1);
 
     const row2 = document.createElement('tr');
     for (let i = 0; i < monthKeys.length; i++) {
-      row2.innerHTML += '<th class="sub-header expected">예상</th><th class="sub-header actual">실제</th>';
+      const even = i % 2 === 0 ? ' month-even' : '';
+      row2.innerHTML += `<th class="sub-header expected${even}">예상</th><th class="sub-header actual${even}">실제</th>`;
     }
     thead.appendChild(row2);
 
@@ -109,7 +111,7 @@ const BudgetView = {
     const incomeHeader = document.createElement('tr');
     incomeHeader.className = 'section-header income-section';
     incomeHeader.innerHTML = `<td class="sticky-col col-category section-title" colspan="3">수입</td>` +
-      monthKeys.map(() => '<td colspan="2"></td>').join('');
+      monthKeys.map((_, i) => `<td colspan="2" class="${i % 2 === 0 ? 'month-even' : ''}"></td>`).join('');
     tbody.appendChild(incomeHeader);
 
     const allIncome = this._collectIncomeItems(data);
@@ -133,7 +135,7 @@ const BudgetView = {
     const expenseHeader = document.createElement('tr');
     expenseHeader.className = 'section-header expense-section';
     expenseHeader.innerHTML = `<td class="sticky-col col-category section-title" colspan="3">지출</td>` +
-      monthKeys.map(() => '<td colspan="2"></td>').join('');
+      monthKeys.map((_, i) => `<td colspan="2" class="${i % 2 === 0 ? 'month-even' : ''}"></td>`).join('');
     tbody.appendChild(expenseHeader);
 
     const allExpense = this._collectExpenseItems(data);
@@ -271,13 +273,15 @@ const BudgetView = {
       ? `<td class="sticky-col col-payday">${item.payDay || ''}</td>`
       : `<td class="sticky-col col-payday"></td>`;
 
-    for (const mk of monthKeys) {
+    for (let mi = 0; mi < monthKeys.length; mi++) {
+      const mk = monthKeys[mi];
+      const even = mi % 2 === 0 ? ' month-even' : '';
       const md = DataStore.ensureMonthData(mk);
       const section = type === 'income' ? md.income : md.expense;
       const d = section[item.id] || { expected: 0, actual: 0 };
-      cells += `<td class="cell expected" data-tooltip="${item.name}" data-month="${mk}" data-type="${type}" data-item="${item.id}" data-field="expected"
+      cells += `<td class="cell expected${even}" data-tooltip="${item.name}" data-month="${mk}" data-type="${type}" data-item="${item.id}" data-field="expected"
                     onclick="BudgetView.editCell(this)">${this._formatNumber(d.expected)}</td>`;
-      cells += `<td class="cell actual" data-tooltip="${item.name}" data-month="${mk}" data-type="${type}" data-item="${item.id}" data-field="actual"
+      cells += `<td class="cell actual${even}" data-tooltip="${item.name}" data-month="${mk}" data-type="${type}" data-item="${item.id}" data-field="actual"
                     onclick="BudgetView.editCell(this)">${this._formatNumber(d.actual)}</td>`;
     }
 
@@ -299,16 +303,18 @@ const BudgetView = {
     </td>`;
     cells += `<td class="sticky-col col-payday">${card.payDay || ''}</td>`;
 
-    for (const mk of monthKeys) {
+    for (let mi = 0; mi < monthKeys.length; mi++) {
+      const mk = monthKeys[mi];
+      const even = mi % 2 === 0 ? ' month-even' : '';
       const monthResult = sim.find(r => r.monthKey === mk);
       const billing = monthResult ? monthResult.billing : 0;
       const billingKey = 'card-billing-' + card.id;
       const md = DataStore.ensureMonthData(mk);
       const actualData = md.expense[billingKey] || { expected: 0, actual: 0 };
 
-      cells += `<td class="cell expected card-linked" data-tooltip="${card.name}" data-card-id="${card.id}" data-month="${mk}"
+      cells += `<td class="cell expected card-linked${even}" data-tooltip="${card.name}" data-card-id="${card.id}" data-month="${mk}"
                     onclick="App.navigateToCard('${card.id}', '${mk}')">${this._formatNumber(billing)}</td>`;
-      cells += `<td class="cell actual" data-tooltip="${card.name}" data-month="${mk}" data-type="expense" data-item="${billingKey}" data-field="actual"
+      cells += `<td class="cell actual${even}" data-tooltip="${card.name}" data-month="${mk}" data-type="expense" data-item="${billingKey}" data-field="actual"
                     onclick="BudgetView.editCell(this)">${this._formatNumber(actualData.actual)}</td>`;
     }
 
@@ -330,16 +336,18 @@ const BudgetView = {
     </td>`;
     cells += `<td class="sticky-col col-payday">${loan.payDay || ''}</td>`;
 
-    for (const mk of monthKeys) {
+    for (let mi = 0; mi < monthKeys.length; mi++) {
+      const mk = monthKeys[mi];
+      const even = mi % 2 === 0 ? ' month-even' : '';
       const monthResult = sim.find(r => r.monthKey === mk);
       const payment = monthResult ? monthResult.payment : 0;
       const paymentKey = 'loan-payment-' + loan.id;
       const md = DataStore.ensureMonthData(mk);
       const actualData = md.expense[paymentKey] || { expected: 0, actual: 0 };
 
-      cells += `<td class="cell expected loan-linked" data-tooltip="${loan.name}" data-loan-id="${loan.id}" data-month="${mk}"
+      cells += `<td class="cell expected loan-linked${even}" data-tooltip="${loan.name}" data-loan-id="${loan.id}" data-month="${mk}"
                     onclick="App.navigateToLoan('${loan.id}', '${mk}')">${this._formatNumber(payment)}</td>`;
-      cells += `<td class="cell actual" data-tooltip="${loan.name}" data-month="${mk}" data-type="expense" data-item="${paymentKey}" data-field="actual"
+      cells += `<td class="cell actual${even}" data-tooltip="${loan.name}" data-month="${mk}" data-type="expense" data-item="${paymentKey}" data-field="actual"
                     onclick="BudgetView.editCell(this)">${this._formatNumber(actualData.actual)}</td>`;
     }
 
@@ -361,16 +369,18 @@ const BudgetView = {
     </td>`;
     cells += `<td class="sticky-col col-payday"></td>`;
 
-    for (const mk of monthKeys) {
+    for (let mi = 0; mi < monthKeys.length; mi++) {
+      const mk = monthKeys[mi];
+      const even = mi % 2 === 0 ? ' month-even' : '';
       const monthResult = sim.find(r => r.monthKey === mk);
       const income = monthResult ? monthResult.sellAmount : 0;
       const incomeKey = 'stock-income-' + stock.id;
       const md = DataStore.ensureMonthData(mk);
       const actualData = md.income[incomeKey] || { expected: 0, actual: 0 };
 
-      cells += `<td class="cell expected stock-linked" data-tooltip="${stock.name}" data-stock-id="${stock.id}" data-month="${mk}"
+      cells += `<td class="cell expected stock-linked${even}" data-tooltip="${stock.name}" data-stock-id="${stock.id}" data-month="${mk}"
                     onclick="App.navigateToStock('${stock.id}', '${mk}')">${this._formatNumber(income)}</td>`;
-      cells += `<td class="cell actual" data-tooltip="${stock.name}" data-month="${mk}" data-type="income" data-item="${incomeKey}" data-field="actual"
+      cells += `<td class="cell actual${even}" data-tooltip="${stock.name}" data-month="${mk}" data-type="income" data-item="${incomeKey}" data-field="actual"
                     onclick="BudgetView.editCell(this)">${this._formatNumber(actualData.actual)}</td>`;
     }
 
@@ -384,12 +394,14 @@ const BudgetView = {
 
     let cells = `<td class="sticky-col col-category total-label" colspan="2">${label}</td><td class="sticky-col col-payday"></td>`;
 
-    for (const mk of monthKeys) {
+    for (let mi = 0; mi < monthKeys.length; mi++) {
+      const mk = monthKeys[mi];
+      const even = mi % 2 === 0 ? ' month-even' : '';
       const totals = DataStore.getMonthTotals(mk);
       const exp = type === 'income' ? totals.incomeExpected : totals.expenseExpected;
       const act = type === 'income' ? totals.incomeActual : totals.expenseActual;
-      cells += `<td class="cell total expected">${this._formatNumber(exp)}</td>`;
-      cells += `<td class="cell total actual">${this._formatNumber(act)}</td>`;
+      cells += `<td class="cell total expected${even}">${this._formatNumber(exp)}</td>`;
+      cells += `<td class="cell total actual${even}">${this._formatNumber(act)}</td>`;
     }
 
     tr.innerHTML = cells;
@@ -402,12 +414,14 @@ const BudgetView = {
 
     let cells = `<td class="sticky-col col-category balance-label" colspan="2">결산</td><td class="sticky-col col-payday"></td>`;
 
-    for (const mk of monthKeys) {
+    for (let mi = 0; mi < monthKeys.length; mi++) {
+      const mk = monthKeys[mi];
+      const even = mi % 2 === 0 ? ' month-even' : '';
       const totals = DataStore.getMonthTotals(mk);
       const balExp = totals.balanceExpected;
       const balAct = totals.balanceActual;
-      cells += `<td class="cell balance expected ${balExp >= 0 ? 'positive' : 'negative'}">${this._formatNumber(balExp)}</td>`;
-      cells += `<td class="cell balance actual ${balAct >= 0 ? 'positive' : 'negative'}">${this._formatNumber(balAct)}</td>`;
+      cells += `<td class="cell balance expected${even} ${balExp >= 0 ? 'positive' : 'negative'}">${this._formatNumber(balExp)}</td>`;
+      cells += `<td class="cell balance actual${even} ${balAct >= 0 ? 'positive' : 'negative'}">${this._formatNumber(balAct)}</td>`;
     }
 
     tr.innerHTML = cells;

@@ -254,6 +254,21 @@ th.sticky-col {
   text-align: center;
   font-size: 12px;
   color: var(--accent);
+  border-left: 2px solid var(--accent) !important;
+}
+
+.budget-table td.cell.expected,
+.budget-table td.cell.stock-linked,
+.budget-table td.cell.card-linked,
+.budget-table td.cell.loan-linked,
+.budget-table .total-row td.cell.expected,
+.budget-table .balance-row td.cell.balance.expected {
+  border-left: 2px solid rgba(79, 195, 247, 0.3);
+}
+
+.budget-table .month-even td,
+.budget-table td.month-even {
+  background-image: linear-gradient(rgba(255,255,255,0.02), rgba(255,255,255,0.02));
 }
 
 .sub-header {
@@ -265,6 +280,7 @@ th.sticky-col {
 .sub-header.expected {
   background-color: var(--bg-header);
   background-image: linear-gradient(rgba(33, 150, 243, 0.1), rgba(33, 150, 243, 0.1));
+  border-left: 2px solid rgba(79, 195, 247, 0.3);
 }
 .sub-header.actual {
   background-color: var(--bg-header);

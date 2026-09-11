@@ -259,7 +259,7 @@ const App = {
         CloudSync.setGistId(foundId);
         status.textContent = `${user.login} 계정의 Gist를 자동으로 찾았습니다.`;
         status.className = 'sync-status sync-success';
-        const updated = await DataStore.syncFromCloud();
+        const updated = await DataStore.syncFromCloud(true);
         if (updated) this.switchTab(this.currentTab);
       } else {
         try {
@@ -282,7 +282,7 @@ const App = {
 
   async syncPull() {
     try {
-      const updated = await DataStore.syncFromCloud();
+      const updated = await DataStore.syncFromCloud(true);
       if (updated) {
         this.switchTab(this.currentTab);
         const el = document.getElementById('sync-status');

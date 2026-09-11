@@ -746,20 +746,20 @@ const DataStore = {
     this.save();
   },
 
-  async syncFromCloud() {
+  async syncFromCloud(force) {
     if (typeof CloudSync === 'undefined' || !CloudSync.isConfigured()) return false;
     try {
       const remote = await CloudSync.pull();
       if (!remote) return false;
-      const localTime = this._data._lastModified || 0;
-      const remoteTime = remote._lastModified || 0;
-      if (remoteTime > localTime) {
-        this._data = remote;
-        this._migrate();
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(this._data));
-        return true;
+      if (!force) {
+        const localTime = this._data._lastModified || 0;
+        const remoteTime = remote._lastModified || 0;
+        if (remoteTime <= localTime) return false;
       }
-      return false;
+      this._data = remote;
+      this._migrate();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(this._data));
+      return true;
     } catch {
       return false;
     }

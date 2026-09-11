@@ -128,7 +128,7 @@ const DataStore = {
       }
     } else {
       this._data = JSON.parse(JSON.stringify(DEFAULT_DATA));
-      this._initMonthlyData();
+      this._initMonthlyData(true);
     }
     return this._data;
   },
@@ -178,7 +178,7 @@ const DataStore = {
     return this._data;
   },
 
-  _initMonthlyData() {
+  _initMonthlyData(skipSave) {
     const { startMonth, startYear, months } = this._data.settings;
     for (let i = 0; i < months; i++) {
       const m = (startMonth - 1 + i) % 12 + 1;
@@ -188,7 +188,7 @@ const DataStore = {
         this._data.monthlyData[key] = this._createMonthEntry();
       }
     }
-    this.save();
+    if (!skipSave) this.save();
   },
 
   _createMonthEntry() {

@@ -44,6 +44,7 @@ const DEFAULT_DATA = {
       minPaymentRatio: 0.1,
       interestRate: 0.196,
       initialCarryOver: 28000000,
+      baseMonth: '2026-09',
       payDay: null,
       monthlyOverrides: {}
     },
@@ -55,6 +56,7 @@ const DEFAULT_DATA = {
       minPaymentRatio: 0.1,
       interestRate: 0.192,
       initialCarryOver: 10450202,
+      baseMonth: '2026-09',
       payDay: null,
       monthlyOverrides: {}
     },
@@ -66,6 +68,7 @@ const DEFAULT_DATA = {
       minPaymentRatio: 0.2,
       interestRate: 0.1442,
       initialCarryOver: 1000000,
+      baseMonth: '2026-09',
       payDay: null,
       monthlyOverrides: {}
     }
@@ -341,11 +344,12 @@ const DataStore = {
     this.save();
   },
 
-  addCard(name, monthlyUsage, minPaymentRatio, interestRate, initialCarryOver, color, payDay) {
+  addCard(name, monthlyUsage, minPaymentRatio, interestRate, initialCarryOver, color, payDay, baseMonth) {
     const id = 'card-' + Date.now();
     this._data.cards.push({
       id, name, color: color || '#999',
       monthlyUsage, minPaymentRatio, interestRate, initialCarryOver,
+      baseMonth: baseMonth || null,
       payDay: payDay || null,
       monthlyOverrides: {}
     });
@@ -378,9 +382,19 @@ const DataStore = {
     const monthKeys = this.getMonthKeys();
     const results = [];
     let carryOver = card.initialCarryOver;
+    const base = card.baseMonth || null;
 
     for (let i = 0; i < monthKeys.length; i++) {
       const mk = monthKeys[i];
+
+      if (base && mk < base) {
+        results.push({
+          monthKey: mk, billing: 0, usage: 0, carryOver: 0,
+          minPaymentRatio: 0, minPayment: 0, remaining: 0, interestRate: 0, fee: 0
+        });
+        continue;
+      }
+
       const overrides = card.monthlyOverrides[mk] || {};
       const usage = overrides.monthlyUsage ?? card.monthlyUsage;
       const ratio = overrides.minPaymentRatio ?? card.minPaymentRatio;

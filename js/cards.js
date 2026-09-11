@@ -27,6 +27,7 @@ const CardsView = {
         <span>월이용금액: <strong>${this._formatNumber(card.monthlyUsage)}</strong></span>
         <span>최소결제비율: <strong>${(card.minPaymentRatio * 100).toFixed(0)}%</strong></span>
         <span>이자율: <strong>${(card.interestRate * 100).toFixed(3)}%</strong></span>
+        <span>기준월: <strong>${card.baseMonth ? DataStore.getMonthLabel(card.baseMonth) : '-'}</strong></span>
         <span>결제일: <strong>${card.payDay ? card.payDay + '일' : '-'}</strong></span>
         <button class="btn btn-sm" onclick="CardsView.editCard('${card.id}')">설정</button>
         <button class="btn btn-sm btn-danger" onclick="CardsView.removeCard('${card.id}')">삭제</button>
@@ -138,6 +139,8 @@ const CardsView = {
     const ratio = Number(prompt('최소결제비율 (0~1):', '0.1')) || 0.1;
     const rate = Number(prompt('연이자율 (0~1):', '0.18')) || 0.18;
     const initial = Number(prompt('초기 이월잔액:', '0')) || 0;
+    const baseMonthStr = prompt('기준월 (YYYY-MM, 예: 2026-09):', '');
+    const baseMonth = baseMonthStr && /^\d{4}-\d{2}$/.test(baseMonthStr.trim()) ? baseMonthStr.trim() : null;
     const payDayStr = prompt('결제일 (없으면 빈칸):', '');
     const payDay = payDayStr ? Number(payDayStr) || null : null;
 
@@ -145,7 +148,7 @@ const CardsView = {
     const data = DataStore.getData();
     const color = colors[data.cards.length % colors.length];
 
-    DataStore.addCard(name, usage, ratio, rate, initial, color, payDay);
+    DataStore.addCard(name, usage, ratio, rate, initial, color, payDay, baseMonth);
     this._refresh();
   },
 
@@ -168,6 +171,11 @@ const CardsView = {
 
     const initial = prompt('초기 이월잔액:', card.initialCarryOver);
     if (initial !== null) DataStore.updateCardField(cardId, 'initialCarryOver', Number(initial) || 0);
+
+    const baseMonthStr = prompt('기준월 (YYYY-MM):', card.baseMonth || '');
+    if (baseMonthStr !== null) {
+      DataStore.updateCardField(cardId, 'baseMonth', baseMonthStr.trim() && /^\d{4}-\d{2}$/.test(baseMonthStr.trim()) ? baseMonthStr.trim() : null);
+    }
 
     const payDayStr = prompt('결제일:', card.payDay || '');
     if (payDayStr !== null) {

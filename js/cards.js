@@ -24,7 +24,7 @@ const CardsView = {
     header.innerHTML = `
       <h3 style="color: ${card.color}">${card.name}</h3>
       <div class="card-meta">
-        <span>월이용금액: <strong>${this._formatNumber(card.monthlyUsage)}</strong></span>
+        <span>일시불이용금액: <strong>${this._formatNumber(card.monthlyUsage)}</strong></span>
         <span>최소결제비율: <strong>${(card.minPaymentRatio * 100).toFixed(0)}%</strong></span>
         <span>이자율: <strong>${(card.interestRate * 100).toFixed(3)}%</strong></span>
         <span>기준월: <strong>${card.baseMonth ? DataStore.getMonthLabel(card.baseMonth) : '-'}</strong></span>
@@ -59,14 +59,15 @@ const CardsView = {
 
     const tbody = document.createElement('tbody');
     const rows = [
-      { label: '청구액(④+⑦)', key: 'billing', editable: false, className: 'highlight-row' },
-      { label: '① 월이용금액', key: 'usage', editable: true, overrideKey: 'monthlyUsage' },
-      { label: '② 이월결제금액', key: 'carryOver', editable: false },
+      { label: '청구액(⑤+⑦+⑧)', key: 'billing', editable: false, className: 'highlight-row' },
+      { label: '① 일시불이용금액', key: 'usage', editable: true, overrideKey: 'monthlyUsage' },
+      { label: '② 일시불이월금액', key: 'carryOver', editable: false },
       { label: '③ 최소결제비율', key: 'minPaymentRatio', editable: true, overrideKey: 'minPaymentRatio', format: 'percent' },
-      { label: '④ 최소결제금액[(①+②)×③]', key: 'minPayment', editable: false },
-      { label: '⑤ 잔여결제금액[(①+②)-④]', key: 'remaining', editable: false },
-      { label: '⑥ 이자율', key: 'interestRate', editable: true, overrideKey: 'interestRate', format: 'percent' },
-      { label: '⑦ 이용수수료[⑤×⑥/12]', key: 'fee', editable: false, className: 'interest-row' },
+      { label: '④ 이자율', key: 'interestRate', editable: true, overrideKey: 'interestRate', format: 'percent' },
+      { label: '⑤ 최소결제금액(일시불)[(①+②)×③]', key: 'minPayment', editable: false },
+      { label: '⑥ 잔여결제금액(일시불)[(①+②)-⑤]', key: 'remaining', editable: false },
+      { label: '⑦ 이용수수료[⑥×④/12]', key: 'fee', editable: false, className: 'interest-row' },
+      { label: '⑧ 할부이용금액', key: 'installmentUsage', editable: true, overrideKey: 'installmentUsage' },
     ];
 
     for (const rowDef of rows) {
@@ -135,7 +136,8 @@ const CardsView = {
     const name = prompt('카드 이름:');
     if (!name) return;
 
-    const usage = Number(prompt('월 필이용금액:', '200000')) || 200000;
+    const usage = Number(prompt('일시불이용금액:', '200000')) || 200000;
+    const installment = Number(prompt('할부이용금액:', '0')) || 0;
     const ratio = Number(prompt('최소결제비율 (0~1):', '0.1')) || 0.1;
     const rate = Number(prompt('연이자율 (0~1):', '0.18')) || 0.18;
     const initial = Number(prompt('초기 이월잔액:', '0')) || 0;
@@ -148,7 +150,7 @@ const CardsView = {
     const data = DataStore.getData();
     const color = colors[data.cards.length % colors.length];
 
-    DataStore.addCard(name, usage, ratio, rate, initial, color, payDay, baseMonth);
+    DataStore.addCard(name, usage, installment, ratio, rate, initial, color, payDay, baseMonth);
     this._refresh();
   },
 
@@ -160,8 +162,11 @@ const CardsView = {
     const name = prompt('카드 이름:', card.name);
     if (name) DataStore.updateCardField(cardId, 'name', name);
 
-    const usage = prompt('월 필이용금액:', card.monthlyUsage);
+    const usage = prompt('일시불이용금액:', card.monthlyUsage);
     if (usage !== null) DataStore.updateCardField(cardId, 'monthlyUsage', Number(usage) || 0);
+
+    const installment = prompt('할부이용금액:', card.installmentUsage || 0);
+    if (installment !== null) DataStore.updateCardField(cardId, 'installmentUsage', Number(installment) || 0);
 
     const ratio = prompt('최소결제비율 (0~1):', card.minPaymentRatio);
     if (ratio !== null) DataStore.updateCardField(cardId, 'minPaymentRatio', Number(ratio) || 0.1);

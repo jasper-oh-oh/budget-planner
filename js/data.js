@@ -41,6 +41,7 @@ const DEFAULT_DATA = {
       name: '현대카드',
       color: '#FFD700',
       monthlyUsage: 200000,
+      installmentUsage: 0,
       minPaymentRatio: 0.1,
       interestRate: 0.196,
       initialCarryOver: 28000000,
@@ -53,6 +54,7 @@ const DEFAULT_DATA = {
       name: '농협카드',
       color: '#4CAF50',
       monthlyUsage: 200000,
+      installmentUsage: 0,
       minPaymentRatio: 0.1,
       interestRate: 0.192,
       initialCarryOver: 10450202,
@@ -65,6 +67,7 @@ const DEFAULT_DATA = {
       name: '하나카드',
       color: '#03A9F4',
       monthlyUsage: 2000000,
+      installmentUsage: 0,
       minPaymentRatio: 0.2,
       interestRate: 0.1442,
       initialCarryOver: 1000000,
@@ -155,6 +158,7 @@ const DataStore = {
     for (const card of this._data.cards) {
       if (card.payDay === undefined) card.payDay = null;
       if (card.baseMonth === undefined) card.baseMonth = '2026-09';
+      if (card.installmentUsage === undefined) card.installmentUsage = 0;
     }
     for (const loan of this._data.loans) {
       if (loan.payDay === undefined) loan.payDay = null;
@@ -345,11 +349,12 @@ const DataStore = {
     this.save();
   },
 
-  addCard(name, monthlyUsage, minPaymentRatio, interestRate, initialCarryOver, color, payDay, baseMonth) {
+  addCard(name, monthlyUsage, installmentUsage, minPaymentRatio, interestRate, initialCarryOver, color, payDay, baseMonth) {
     const id = 'card-' + Date.now();
     this._data.cards.push({
       id, name, color: color || '#999',
-      monthlyUsage, minPaymentRatio, interestRate, initialCarryOver,
+      monthlyUsage, installmentUsage: installmentUsage || 0,
+      minPaymentRatio, interestRate, initialCarryOver,
       baseMonth: baseMonth || null,
       payDay: payDay || null,
       monthlyOverrides: {}
@@ -391,20 +396,22 @@ const DataStore = {
       if (base && mk < base) {
         results.push({
           monthKey: mk, billing: 0, usage: 0, carryOver: 0,
-          minPaymentRatio: 0, minPayment: 0, remaining: 0, interestRate: 0, fee: 0
+          minPaymentRatio: 0, minPayment: 0, remaining: 0,
+          interestRate: 0, fee: 0, installmentUsage: 0
         });
         continue;
       }
 
       const overrides = card.monthlyOverrides[mk] || {};
       const usage = overrides.monthlyUsage ?? card.monthlyUsage;
+      const installment = overrides.installmentUsage ?? card.installmentUsage;
       const ratio = overrides.minPaymentRatio ?? card.minPaymentRatio;
       const effectiveRate = ratio >= 1 ? 0 : (overrides.interestRate ?? card.interestRate);
 
       const minPayment = Math.round((usage + carryOver) * ratio);
       const remaining = Math.round((usage + carryOver) - minPayment);
       const fee = Math.round(remaining * effectiveRate / 12);
-      const billing = minPayment + fee;
+      const billing = minPayment + fee + Math.round(installment);
 
       results.push({
         monthKey: mk,
@@ -416,9 +423,10 @@ const DataStore = {
         remaining,
         interestRate: effectiveRate,
         fee,
+        installmentUsage: Math.round(installment),
       });
 
-      carryOver = remaining + fee;
+      carryOver = remaining;
     }
     return results;
   },

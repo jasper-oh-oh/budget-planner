@@ -248,6 +248,25 @@ const DataStore = {
     this.save();
   },
 
+  updateMemo(monthKey, type, itemId, memo) {
+    const md = this.ensureMonthData(monthKey);
+    const section = type === 'income' ? md.income : md.expense;
+    if (!section[itemId]) section[itemId] = { expected: 0, actual: 0 };
+    if (memo) {
+      section[itemId].memo = memo;
+    } else {
+      delete section[itemId].memo;
+    }
+    this.save();
+  },
+
+  getMemo(monthKey, type, itemId) {
+    const md = this._data.monthlyData[monthKey];
+    if (!md) return '';
+    const section = type === 'income' ? md.income : md.expense;
+    return (section[itemId] && section[itemId].memo) || '';
+  },
+
   getCardBillingForMonth(monthKey) {
     const billings = [];
     for (const card of this._data.cards) {

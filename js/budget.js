@@ -55,7 +55,21 @@ const BudgetView = {
     wrapper.addEventListener('mouseover', (e) => {
       const cell = e.target.closest('[data-tooltip]');
       if (!cell) return;
-      tip.textContent = cell.dataset.tooltip;
+      const name = cell.dataset.tooltip;
+      const memo = cell.dataset.memo;
+      if (memo) {
+        tip.innerHTML = '';
+        const nameEl = document.createElement('span');
+        nameEl.className = 'tooltip-name';
+        nameEl.textContent = name;
+        const memoEl = document.createElement('span');
+        memoEl.className = 'tooltip-memo';
+        memoEl.textContent = memo;
+        tip.appendChild(nameEl);
+        tip.appendChild(memoEl);
+      } else {
+        tip.textContent = name;
+      }
       tip.style.display = 'block';
     });
 
@@ -308,8 +322,14 @@ const BudgetView = {
       const d = section[item.id] || { expected: 0, actual: 0 };
       if (this._showExpected) cells += `<td class="cell expected${even}" data-tooltip="${item.name}" data-month="${mk}" data-type="${type}" data-item="${item.id}" data-field="expected"
                     onclick="BudgetView.editCell(this)">${this._formatNumber(d.expected)}</td>`;
-      if (this._showActual) cells += `<td class="cell actual${even}" data-tooltip="${item.name}" data-month="${mk}" data-type="${type}" data-item="${item.id}" data-field="actual"
-                    onclick="BudgetView.editCell(this)">${this._formatNumber(d.actual)}</td>`;
+      if (this._showActual) {
+        const memo = DataStore.getMemo(mk, type, item.id);
+        const memoAttr = memo ? ` data-memo="${this._escapeAttr(memo)}"` : '';
+        const memoClass = memo ? ' has-memo' : '';
+        const memoIcon = `<span class="memo-icon${memoClass}" onclick="event.stopPropagation();BudgetView.openMemo(this.closest('td'))">✎</span>`;
+        cells += `<td class="cell actual${even}" data-tooltip="${item.name}"${memoAttr} data-month="${mk}" data-type="${type}" data-item="${item.id}" data-field="actual"
+                    onclick="BudgetView.editCell(this)">${this._formatNumber(d.actual)}${memoIcon}</td>`;
+      }
     }
 
     tr.innerHTML = cells;
@@ -341,8 +361,14 @@ const BudgetView = {
 
       if (this._showExpected) cells += `<td class="cell expected card-linked${even}" data-tooltip="${card.name}" data-card-id="${card.id}" data-month="${mk}"
                     onclick="App.navigateToCard('${card.id}', '${mk}')">${this._formatNumber(billing)}</td>`;
-      if (this._showActual) cells += `<td class="cell actual${even}" data-tooltip="${card.name}" data-month="${mk}" data-type="expense" data-item="${billingKey}" data-field="actual"
-                    onclick="BudgetView.editCell(this)">${this._formatNumber(actualData.actual)}</td>`;
+      if (this._showActual) {
+        const memo = DataStore.getMemo(mk, 'expense', billingKey);
+        const memoAttr = memo ? ` data-memo="${this._escapeAttr(memo)}"` : '';
+        const memoClass = memo ? ' has-memo' : '';
+        const memoIcon = `<span class="memo-icon${memoClass}" onclick="event.stopPropagation();BudgetView.openMemo(this.closest('td'))">✎</span>`;
+        cells += `<td class="cell actual${even}" data-tooltip="${card.name}"${memoAttr} data-month="${mk}" data-type="expense" data-item="${billingKey}" data-field="actual"
+                    onclick="BudgetView.editCell(this)">${this._formatNumber(actualData.actual)}${memoIcon}</td>`;
+      }
     }
 
     tr.innerHTML = cells;
@@ -374,8 +400,14 @@ const BudgetView = {
 
       if (this._showExpected) cells += `<td class="cell expected loan-linked${even}" data-tooltip="${loan.name}" data-loan-id="${loan.id}" data-month="${mk}"
                     onclick="App.navigateToLoan('${loan.id}', '${mk}')">${this._formatNumber(payment)}</td>`;
-      if (this._showActual) cells += `<td class="cell actual${even}" data-tooltip="${loan.name}" data-month="${mk}" data-type="expense" data-item="${paymentKey}" data-field="actual"
-                    onclick="BudgetView.editCell(this)">${this._formatNumber(actualData.actual)}</td>`;
+      if (this._showActual) {
+        const memo = DataStore.getMemo(mk, 'expense', paymentKey);
+        const memoAttr = memo ? ` data-memo="${this._escapeAttr(memo)}"` : '';
+        const memoClass = memo ? ' has-memo' : '';
+        const memoIcon = `<span class="memo-icon${memoClass}" onclick="event.stopPropagation();BudgetView.openMemo(this.closest('td'))">✎</span>`;
+        cells += `<td class="cell actual${even}" data-tooltip="${loan.name}"${memoAttr} data-month="${mk}" data-type="expense" data-item="${paymentKey}" data-field="actual"
+                    onclick="BudgetView.editCell(this)">${this._formatNumber(actualData.actual)}${memoIcon}</td>`;
+      }
     }
 
     tr.innerHTML = cells;
@@ -407,8 +439,14 @@ const BudgetView = {
 
       if (this._showExpected) cells += `<td class="cell expected stock-linked${even}" data-tooltip="${stock.name}" data-stock-id="${stock.id}" data-month="${mk}"
                     onclick="App.navigateToStock('${stock.id}', '${mk}')">${this._formatNumber(income)}</td>`;
-      if (this._showActual) cells += `<td class="cell actual${even}" data-tooltip="${stock.name}" data-month="${mk}" data-type="income" data-item="${incomeKey}" data-field="actual"
-                    onclick="BudgetView.editCell(this)">${this._formatNumber(actualData.actual)}</td>`;
+      if (this._showActual) {
+        const memo = DataStore.getMemo(mk, 'income', incomeKey);
+        const memoAttr = memo ? ` data-memo="${this._escapeAttr(memo)}"` : '';
+        const memoClass = memo ? ' has-memo' : '';
+        const memoIcon = `<span class="memo-icon${memoClass}" onclick="event.stopPropagation();BudgetView.openMemo(this.closest('td'))">✎</span>`;
+        cells += `<td class="cell actual${even}" data-tooltip="${stock.name}"${memoAttr} data-month="${mk}" data-type="income" data-item="${incomeKey}" data-field="actual"
+                    onclick="BudgetView.editCell(this)">${this._formatNumber(actualData.actual)}${memoIcon}</td>`;
+      }
     }
 
     tr.innerHTML = cells;
@@ -469,7 +507,9 @@ const BudgetView = {
     input.addEventListener('blur', () => this._saveCell(td, input, month, type, item, field));
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') input.blur();
-      if (e.key === 'Escape') td.textContent = currentText;
+      if (e.key === 'Escape') {
+        this._restoreCellContent(td, currentText);
+      }
       if (e.key === 'Tab') {
         e.preventDefault();
         input.blur();
@@ -489,8 +529,19 @@ const BudgetView = {
   _saveCell(td, input, monthKey, type, itemId, field) {
     const val = this._parseNumber(input.value);
     DataStore.updateCell(monthKey, type, itemId, field, val);
-    td.textContent = this._formatNumber(val);
+    this._restoreCellContent(td, this._formatNumber(val));
     this._refreshTotals();
+  },
+
+  _restoreCellContent(td, text) {
+    if (td.dataset.field === 'actual') {
+      const memo = DataStore.getMemo(td.dataset.month, td.dataset.type, td.dataset.item);
+      const memoClass = memo ? ' has-memo' : '';
+      const memoIcon = `<span class="memo-icon${memoClass}" onclick="event.stopPropagation();BudgetView.openMemo(this.closest('td'))">✎</span>`;
+      td.innerHTML = `${text}${memoIcon}`;
+    } else {
+      td.textContent = text;
+    }
   },
 
   _refreshTotals() {
@@ -586,5 +637,67 @@ const BudgetView = {
     if (!confirm('이 항목을 삭제하시겠습니까?')) return;
     DataStore.removeItem(type, id);
     this._refreshTotals();
+  },
+
+  _escapeAttr(str) {
+    return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  },
+
+  openMemo(td) {
+    if (document.querySelector('.memo-popup')) return;
+    const { month, type, item } = td.dataset;
+    const current = DataStore.getMemo(month, type, item);
+
+    const popup = document.createElement('div');
+    popup.className = 'memo-popup';
+
+    const textarea = document.createElement('textarea');
+    textarea.className = 'memo-textarea';
+    textarea.value = current;
+    textarea.placeholder = '메모 입력...';
+
+    const btnRow = document.createElement('div');
+    btnRow.className = 'memo-btn-row';
+
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'btn btn-sm memo-save';
+    saveBtn.textContent = '저장';
+    saveBtn.onclick = () => {
+      const val = textarea.value.trim();
+      DataStore.updateMemo(month, type, item, val);
+      if (val) {
+        td.dataset.memo = val;
+      } else {
+        delete td.dataset.memo;
+      }
+      const icon = td.querySelector('.memo-icon');
+      if (icon) {
+        if (val) icon.classList.add('has-memo');
+        else icon.classList.remove('has-memo');
+      }
+      popup.remove();
+    };
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'btn btn-sm memo-cancel';
+    cancelBtn.textContent = '취소';
+    cancelBtn.onclick = () => popup.remove();
+
+    btnRow.appendChild(saveBtn);
+    btnRow.appendChild(cancelBtn);
+    popup.appendChild(textarea);
+    popup.appendChild(btnRow);
+
+    const rect = td.getBoundingClientRect();
+    popup.style.position = 'fixed';
+    popup.style.left = rect.left + 'px';
+    popup.style.top = (rect.bottom + 4) + 'px';
+    document.body.appendChild(popup);
+    textarea.focus();
+
+    textarea.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveBtn.click(); }
+      if (e.key === 'Escape') cancelBtn.click();
+    });
   }
 };

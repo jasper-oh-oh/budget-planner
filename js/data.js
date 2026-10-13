@@ -353,6 +353,15 @@ const DataStore = {
     return id;
   },
 
+  renameItem(type, id, newName) {
+    const items = type === 'income' ? this._data.incomeItems : this._data.expenseItems;
+    const item = items.find(i => i.id === id);
+    if (item) {
+      item.name = newName;
+      this.save();
+    }
+  },
+
   removeItem(type, id) {
     if (type === 'income') {
       this._data.incomeItems = this._data.incomeItems.filter(i => i.id !== id);

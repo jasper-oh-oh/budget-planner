@@ -313,7 +313,7 @@ const BudgetView = {
       cells += `<td class="sticky-col col-category category-label${catClass}" rowspan="${rowspan}">${category}</td>`;
     }
     cells += `<td class="sticky-col col-name item-name">
-      <span class="item-label">${item.name}</span>
+      <span class="item-label" ondblclick="BudgetView.editItemName(this, '${type}', '${item.id}')">${item.name}</span>
       <button class="btn-icon btn-delete" onclick="BudgetView.removeItem('${type}', '${item.id}')" title="삭제">×</button>
     </td>`;
     cells += type === 'expense'
@@ -538,6 +538,46 @@ const BudgetView = {
 
     td.textContent = '';
     td.appendChild(input);
+    input.focus();
+    input.select();
+  },
+
+  editItemName(span, type, itemId) {
+    if (span.querySelector('input')) return;
+    const currentName = span.textContent.trim();
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'cell-input name-input';
+    input.value = currentName;
+
+    const save = () => {
+      const newName = input.value.trim();
+      if (newName && newName !== currentName) {
+        DataStore.renameItem(type, itemId, newName);
+        const container = document.getElementById('tab-budget');
+        const wrapper = container && container.querySelector('.table-wrapper');
+        const scrollLeft = wrapper ? wrapper.scrollLeft : 0;
+        const scrollTop = wrapper ? wrapper.scrollTop : 0;
+        this.render(container);
+        const newWrapper = container.querySelector('.table-wrapper');
+        if (newWrapper) { newWrapper.scrollLeft = scrollLeft; newWrapper.scrollTop = scrollTop; }
+      } else {
+        span.textContent = currentName;
+      }
+    };
+
+    input.addEventListener('blur', save);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') input.blur();
+      if (e.key === 'Escape') {
+        input.removeEventListener('blur', save);
+        span.textContent = currentName;
+      }
+    });
+
+    span.textContent = '';
+    span.appendChild(input);
     input.focus();
     input.select();
   },

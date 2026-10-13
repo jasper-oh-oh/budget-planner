@@ -1,7 +1,7 @@
 const STORAGE_KEY = 'financial-management-data';
 
 const INCOME_CATEGORIES = ['급여', '부수입', '주식'];
-const EXPENSE_CATEGORIES = ['주거비', '보험', '교육', '생활비', '대출', '투자/저축', '카드대금'];
+const EXPENSE_CATEGORIES = ['주거비', '보험', '교육', '생활비', '여행/레저', '대출', '투자/저축', '카드대금'];
 
 const DEFAULT_DATA = {
   settings: {

@@ -599,7 +599,7 @@ const BudgetView = {
 
   _parseNumber(str) {
     if (!str) return 0;
-    const cleaned = String(str).replace(/[₩,\s]/g, '');
+    const cleaned = String(str).replace(/[^0-9.\-]/g, '');
     const num = Number(cleaned);
     return isNaN(num) ? 0 : num;
   },

@@ -422,6 +422,21 @@ th.sticky-col {
 .cell.expected { background: var(--expected-bg); }
 .cell.actual { background: var(--actual-bg); }
 
+/* Variance highlighting: actual vs expected */
+.budget-table td.cell.variance-blue { background-color: rgba(33, 150, 243, 0.15) !important; }
+
+.budget-table td.cell.variance-red-1 { background-color: rgba(244, 67, 54, 0.10) !important; }
+.budget-table td.cell.variance-red-2 { background-color: rgba(244, 67, 54, 0.18) !important; }
+.budget-table td.cell.variance-red-3 { background-color: rgba(244, 67, 54, 0.26) !important; }
+.budget-table td.cell.variance-red-4 { background-color: rgba(244, 67, 54, 0.34) !important; }
+.budget-table td.cell.variance-red-5 { background-color: rgba(244, 67, 54, 0.42) !important; }
+
+.budget-table td.cell.variance-green-1 { background-color: rgba(76, 175, 80, 0.10) !important; }
+.budget-table td.cell.variance-green-2 { background-color: rgba(76, 175, 80, 0.18) !important; }
+.budget-table td.cell.variance-green-3 { background-color: rgba(76, 175, 80, 0.26) !important; }
+.budget-table td.cell.variance-green-4 { background-color: rgba(76, 175, 80, 0.34) !important; }
+.budget-table td.cell.variance-green-5 { background-color: rgba(76, 175, 80, 0.42) !important; }
+
 .cell.card-linked {
   cursor: pointer;
   background: rgba(255, 215, 0, 0.06);

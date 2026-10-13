@@ -323,11 +323,12 @@ const BudgetView = {
       if (this._showExpected) cells += `<td class="cell expected${even}" data-tooltip="${item.name}" data-month="${mk}" data-type="${type}" data-item="${item.id}" data-field="expected"
                     onclick="BudgetView.editCell(this)">${this._formatNumber(d.expected)}</td>`;
       if (this._showActual) {
+        const vc = this._getVarianceClass(d.expected, d.actual);
         const memo = DataStore.getMemo(mk, type, item.id);
         const memoAttr = memo ? ` data-memo="${this._escapeAttr(memo)}"` : '';
         const memoClass = memo ? ' has-memo' : '';
         const memoIcon = `<span class="memo-icon${memoClass}" onclick="event.stopPropagation();BudgetView.openMemo(this.closest('td'))">✎</span>`;
-        cells += `<td class="cell actual${even}" data-tooltip="${item.name}"${memoAttr} data-month="${mk}" data-type="${type}" data-item="${item.id}" data-field="actual"
+        cells += `<td class="cell actual${even}${vc ? ' ' + vc : ''}" data-tooltip="${item.name}"${memoAttr} data-expected="${d.expected}" data-month="${mk}" data-type="${type}" data-item="${item.id}" data-field="actual"
                     onclick="BudgetView.editCell(this)">${this._formatNumber(d.actual)}${memoIcon}</td>`;
       }
     }
@@ -362,11 +363,12 @@ const BudgetView = {
       if (this._showExpected) cells += `<td class="cell expected card-linked${even}" data-tooltip="${card.name}" data-card-id="${card.id}" data-month="${mk}"
                     onclick="App.navigateToCard('${card.id}', '${mk}')">${this._formatNumber(billing)}</td>`;
       if (this._showActual) {
+        const vc = this._getVarianceClass(billing, actualData.actual);
         const memo = DataStore.getMemo(mk, 'expense', billingKey);
         const memoAttr = memo ? ` data-memo="${this._escapeAttr(memo)}"` : '';
         const memoClass = memo ? ' has-memo' : '';
         const memoIcon = `<span class="memo-icon${memoClass}" onclick="event.stopPropagation();BudgetView.openMemo(this.closest('td'))">✎</span>`;
-        cells += `<td class="cell actual${even}" data-tooltip="${card.name}"${memoAttr} data-month="${mk}" data-type="expense" data-item="${billingKey}" data-field="actual"
+        cells += `<td class="cell actual${even}${vc ? ' ' + vc : ''}" data-tooltip="${card.name}"${memoAttr} data-expected="${billing}" data-month="${mk}" data-type="expense" data-item="${billingKey}" data-field="actual"
                     onclick="BudgetView.editCell(this)">${this._formatNumber(actualData.actual)}${memoIcon}</td>`;
       }
     }
@@ -401,11 +403,12 @@ const BudgetView = {
       if (this._showExpected) cells += `<td class="cell expected loan-linked${even}" data-tooltip="${loan.name}" data-loan-id="${loan.id}" data-month="${mk}"
                     onclick="App.navigateToLoan('${loan.id}', '${mk}')">${this._formatNumber(payment)}</td>`;
       if (this._showActual) {
+        const vc = this._getVarianceClass(payment, actualData.actual);
         const memo = DataStore.getMemo(mk, 'expense', paymentKey);
         const memoAttr = memo ? ` data-memo="${this._escapeAttr(memo)}"` : '';
         const memoClass = memo ? ' has-memo' : '';
         const memoIcon = `<span class="memo-icon${memoClass}" onclick="event.stopPropagation();BudgetView.openMemo(this.closest('td'))">✎</span>`;
-        cells += `<td class="cell actual${even}" data-tooltip="${loan.name}"${memoAttr} data-month="${mk}" data-type="expense" data-item="${paymentKey}" data-field="actual"
+        cells += `<td class="cell actual${even}${vc ? ' ' + vc : ''}" data-tooltip="${loan.name}"${memoAttr} data-expected="${payment}" data-month="${mk}" data-type="expense" data-item="${paymentKey}" data-field="actual"
                     onclick="BudgetView.editCell(this)">${this._formatNumber(actualData.actual)}${memoIcon}</td>`;
       }
     }
@@ -440,11 +443,12 @@ const BudgetView = {
       if (this._showExpected) cells += `<td class="cell expected stock-linked${even}" data-tooltip="${stock.name}" data-stock-id="${stock.id}" data-month="${mk}"
                     onclick="App.navigateToStock('${stock.id}', '${mk}')">${this._formatNumber(income)}</td>`;
       if (this._showActual) {
+        const vc = this._getVarianceClass(income, actualData.actual);
         const memo = DataStore.getMemo(mk, 'income', incomeKey);
         const memoAttr = memo ? ` data-memo="${this._escapeAttr(memo)}"` : '';
         const memoClass = memo ? ' has-memo' : '';
         const memoIcon = `<span class="memo-icon${memoClass}" onclick="event.stopPropagation();BudgetView.openMemo(this.closest('td'))">✎</span>`;
-        cells += `<td class="cell actual${even}" data-tooltip="${stock.name}"${memoAttr} data-month="${mk}" data-type="income" data-item="${incomeKey}" data-field="actual"
+        cells += `<td class="cell actual${even}${vc ? ' ' + vc : ''}" data-tooltip="${stock.name}"${memoAttr} data-expected="${income}" data-month="${mk}" data-type="income" data-item="${incomeKey}" data-field="actual"
                     onclick="BudgetView.editCell(this)">${this._formatNumber(actualData.actual)}${memoIcon}</td>`;
       }
     }
@@ -466,7 +470,10 @@ const BudgetView = {
       const exp = type === 'income' ? totals.incomeExpected : totals.expenseExpected;
       const act = type === 'income' ? totals.incomeActual : totals.expenseActual;
       if (this._showExpected) cells += `<td class="cell total expected${even}">${this._formatNumber(exp)}</td>`;
-      if (this._showActual) cells += `<td class="cell total actual${even}">${this._formatNumber(act)}</td>`;
+      if (this._showActual) {
+        const vc = this._getVarianceClass(exp, act);
+        cells += `<td class="cell total actual${even}${vc ? ' ' + vc : ''}">${this._formatNumber(act)}</td>`;
+      }
     }
 
     tr.innerHTML = cells;
@@ -486,7 +493,10 @@ const BudgetView = {
       const balExp = totals.balanceExpected;
       const balAct = totals.balanceActual;
       if (this._showExpected) cells += `<td class="cell balance expected${even} ${balExp >= 0 ? 'positive' : 'negative'}">${this._formatNumber(balExp)}</td>`;
-      if (this._showActual) cells += `<td class="cell balance actual${even} ${balAct >= 0 ? 'positive' : 'negative'}">${this._formatNumber(balAct)}</td>`;
+      if (this._showActual) {
+        const vc = this._getVarianceClass(balExp, balAct);
+        cells += `<td class="cell balance actual${even} ${balAct >= 0 ? 'positive' : 'negative'}${vc ? ' ' + vc : ''}">${this._formatNumber(balAct)}</td>`;
+      }
     }
 
     tr.innerHTML = cells;
@@ -530,6 +540,21 @@ const BudgetView = {
     const val = this._parseNumber(input.value);
     DataStore.updateCell(monthKey, type, itemId, field, val);
     this._restoreCellContent(td, this._formatNumber(val));
+
+    if (field === 'actual') {
+      const exp = Number(td.dataset.expected || 0);
+      this._applyVarianceClass(td, exp, val);
+    } else if (field === 'expected' && this._showActual) {
+      const nextTd = td.nextElementSibling;
+      if (nextTd && nextTd.classList.contains('actual')) {
+        nextTd.dataset.expected = String(val);
+        const md = DataStore.ensureMonthData(monthKey);
+        const section = type === 'income' ? md.income : md.expense;
+        const d = section[itemId] || { expected: 0, actual: 0 };
+        this._applyVarianceClass(nextTd, val, d.actual);
+      }
+    }
+
     this._refreshTotals();
   },
 
@@ -563,7 +588,10 @@ const BudgetView = {
           const expCell = cells[i * 2];
           const actCell = cells[i * 2 + 1];
           if (expCell) expCell.textContent = this._formatNumber(exp);
-          if (actCell) actCell.textContent = this._formatNumber(act);
+          if (actCell) {
+            actCell.textContent = this._formatNumber(act);
+            this._applyVarianceClass(actCell, exp, act);
+          }
           if (formatClass) {
             if (expCell) { expCell.classList.toggle('positive', exp >= 0); expCell.classList.toggle('negative', exp < 0); }
             if (actCell) { actCell.classList.toggle('positive', act >= 0); actCell.classList.toggle('negative', act < 0); }
@@ -573,6 +601,7 @@ const BudgetView = {
           const val = this._showExpected ? exp : act;
           if (cell) cell.textContent = this._formatNumber(val);
           if (formatClass && cell) { cell.classList.toggle('positive', val >= 0); cell.classList.toggle('negative', val < 0); }
+          if (this._showActual && cell) this._applyVarianceClass(cell, exp, act);
         }
       }
     };
@@ -602,6 +631,26 @@ const BudgetView = {
     const cleaned = String(str).replace(/[^0-9.\-]/g, '');
     const num = Number(cleaned);
     return isNaN(num) ? 0 : num;
+  },
+
+  _getVarianceClass(expected, actual) {
+    if (actual === 0) return '';
+    if (expected === 0) return actual > 0 ? 'variance-red-5' : 'variance-green-5';
+
+    const pct = ((actual - expected) / Math.abs(expected)) * 100;
+    const absPct = Math.abs(pct);
+
+    if (absPct < 10) return 'variance-blue';
+
+    const level = Math.min(5, Math.floor(absPct / 10));
+    return pct > 0 ? `variance-red-${level}` : `variance-green-${level}`;
+  },
+
+  _applyVarianceClass(td, expected, actual) {
+    const classes = td.className.split(/\s+/).filter(c => !c.startsWith('variance-'));
+    const cls = this._getVarianceClass(expected, actual);
+    if (cls) classes.push(cls);
+    td.className = classes.join(' ');
   },
 
   addItem(type) {

@@ -172,6 +172,12 @@ const BudgetView = {
 
     tbody.appendChild(this._buildTotalRow('수입합계', monthKeys, 'income', 'income-total'));
 
+    const spacer = document.createElement('tr');
+    spacer.className = 'section-spacer';
+    spacer.innerHTML = `<td class="sticky-col col-category" colspan="3"></td>` +
+      monthKeys.map((_, i) => `<td colspan="${colSpan}" class="${i % 2 === 0 ? 'month-even' : ''}"></td>`).join('');
+    tbody.appendChild(spacer);
+
     // === 지출 섹션 ===
     const expenseHeader = document.createElement('tr');
     expenseHeader.className = 'section-header expense-section';

@@ -151,7 +151,7 @@ body {
 .table-wrapper {
   overflow-x: auto;
   overflow-y: visible;
-  border: 1px solid var(--border);
+  border: 2px solid rgba(79, 195, 247, 0.65);
   border-radius: 6px;
   max-height: calc(100vh - 130px);
   overflow-y: auto;
@@ -181,6 +181,7 @@ body {
   position: sticky;
   top: 0;
   z-index: 10;
+  border-bottom: 2px solid rgba(79, 195, 247, 0.65);
 }
 
 .sticky-col {
@@ -230,8 +231,16 @@ th.sticky-col {
   background: var(--bg-card);
 }
 
-.budget-table .section-header td.sticky-col {
-  background: var(--bg-header);
+.budget-table .section-header.income-section td.sticky-col {
+  background: rgba(76, 175, 80, 0.08);
+}
+
+.budget-table .section-header.expense-section td.sticky-col {
+  background: rgba(244, 67, 54, 0.08);
+}
+
+.budget-table .section-spacer td.sticky-col {
+  background: var(--bg);
 }
 
 .budget-table .income-total td.sticky-col {
@@ -272,7 +281,7 @@ th.sticky-col {
   text-align: center;
   font-size: 12px;
   color: var(--accent);
-  border-left: 2px solid rgba(79, 195, 247, 0.45) !important;
+  border-left: 3px solid rgba(79, 195, 247, 0.65) !important;
 }
 
 .budget-table td.cell.expected,
@@ -281,7 +290,9 @@ th.sticky-col {
 .budget-table td.cell.loan-linked,
 .budget-table .total-row td.cell.expected,
 .budget-table .balance-row td.cell.balance.expected {
-  border-left: 2px solid rgba(79, 195, 247, 0.45);
+  border-left: 3px solid rgba(79, 195, 247, 0.65);
+  min-width: 100px;
+  padding-left: 12px;
 }
 
 .budget-table .month-even td,
@@ -298,16 +309,35 @@ th.sticky-col {
 .sub-header.expected {
   background-color: var(--bg-header);
   background-image: linear-gradient(rgba(33, 150, 243, 0.1), rgba(33, 150, 243, 0.1));
-  border-left: 2px solid rgba(79, 195, 247, 0.45);
+  border-left: 3px solid rgba(79, 195, 247, 0.65);
+  min-width: 100px;
 }
 .sub-header.actual {
   background-color: var(--bg-header);
   background-image: linear-gradient(rgba(255, 152, 0, 0.1), rgba(255, 152, 0, 0.1));
 }
 
+/* Section spacer */
+.section-spacer td {
+  background: var(--bg);
+  border-color: transparent;
+  height: 20px;
+  padding: 0;
+}
+
 /* Section headers */
-.section-header {
-  background: var(--bg-header);
+.section-header td {
+  border-color: transparent;
+  border-bottom: 2px solid rgba(79, 195, 247, 0.65);
+}
+
+.income-section td {
+  background: rgba(76, 175, 80, 0.08);
+}
+
+.expense-section td {
+  background: rgba(244, 67, 54, 0.08);
+  border-top: 2px solid rgba(79, 195, 247, 0.65);
 }
 
 .section-title {
@@ -521,9 +551,14 @@ th.sticky-col {
   font-weight: 700;
 }
 
+.total-row td {
+  border-top: 2px solid rgba(79, 195, 247, 0.65);
+}
+
 .income-total td {
   background: rgba(76, 175, 80, 0.1);
   color: var(--income);
+  border-bottom: 2px solid rgba(79, 195, 247, 0.65);
 }
 
 .expense-total td {
@@ -543,6 +578,7 @@ th.sticky-col {
 
 .balance-row td {
   background: rgba(79, 195, 247, 0.1);
+  border-top: 2px solid rgba(79, 195, 247, 0.65);
 }
 
 .balance-row .positive { color: var(--positive); }

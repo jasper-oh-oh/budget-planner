@@ -175,6 +175,7 @@ const DataStore = {
     this._data._lastModified = Date.now();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(this._data));
     if (typeof CloudSync !== 'undefined') CloudSync.schedulePush(this._data);
+    if (typeof App !== 'undefined' && App.updateDataInfo) App.updateDataInfo();
   },
 
   getData() {

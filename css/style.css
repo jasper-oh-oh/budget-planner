@@ -76,6 +76,7 @@ body {
 .tab-content {
   display: none;
   padding: 16px 24px;
+  padding-bottom: 44px;
 }
 
 .tab-content.active {
@@ -935,3 +936,28 @@ canvas {
 ::-webkit-scrollbar-thumb:hover {
   background: #444;
 }
+
+/* App Footer */
+.app-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-header);
+  border-top: 1px solid var(--border);
+  padding: 0 24px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  font-size: 11px;
+  color: var(--text-dim);
+  z-index: 100;
+}
+.app-footer span::before {
+  margin-right: 4px;
+}
+#sync-info:empty { display: none; }
+#sync-info.sync-syncing { color: var(--accent); }
+#sync-info.sync-success { color: var(--income); }
+#sync-info.sync-error { color: var(--expense); }

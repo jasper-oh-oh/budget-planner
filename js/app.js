@@ -7,6 +7,7 @@ const App = {
     this.bindTabs();
     this.bindSettings();
     this._initSync();
+    this._initFooter();
     this.switchTab('budget');
   },
 
@@ -17,11 +18,58 @@ const App = {
         el.textContent = msg;
         el.className = 'sync-status sync-' + type;
       }
+      const footerSync = document.getElementById('sync-info');
+      if (footerSync) {
+        footerSync.textContent = msg;
+        footerSync.className = 'sync-' + type;
+      }
     });
     if (CloudSync.isConfigured()) {
       DataStore.syncFromCloud().then(updated => {
-        if (updated) this.switchTab(this.currentTab);
+        if (updated) {
+          this.switchTab(this.currentTab);
+          this.updateDataInfo();
+        }
       });
+    }
+  },
+
+  _initFooter() {
+    this.updateDataInfo();
+    this._fetchAppVersion();
+  },
+
+  _fetchAppVersion() {
+    const el = document.getElementById('app-version');
+    if (!el) return;
+    fetch('https://api.github.com/repos/jasper-oh-oh/budget-planner/commits/main', {
+      headers: { 'Accept': 'application/vnd.github.v3+json' }
+    })
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(commit => {
+        const sha = commit.sha.substring(0, 7);
+        const date = new Date(commit.commit.committer.date);
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const dd = String(date.getDate()).padStart(2, '0');
+        el.textContent = `v.${sha} (${mm}/${dd})`;
+      })
+      .catch(() => { el.textContent = '버전: 확인 불가'; });
+  },
+
+  updateDataInfo() {
+    const el = document.getElementById('data-info');
+    if (!el) return;
+    const data = DataStore.getData();
+    const ts = data._lastModified;
+    if (ts) {
+      const d = new Date(ts);
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mi = String(d.getMinutes()).padStart(2, '0');
+      el.textContent = `데이터: ${mm}/${dd} ${hh}:${mi}`;
+    } else {
+      el.textContent = '데이터: 동기화 전';
     }
   },
 

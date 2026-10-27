@@ -184,11 +184,12 @@ body {
   border-top: 1px solid var(--border);
 }
 
-.budget-table th,
-.card-table th {
+.budget-table thead th,
+.card-table thead th {
   background: var(--bg-header);
   color: var(--text-dim);
   font-weight: 600;
+  position: -webkit-sticky;
   position: sticky;
   top: 0;
   z-index: 10;
@@ -200,6 +201,7 @@ body {
   position: sticky;
   z-index: 5;
   background: var(--bg-card);
+  font-weight: normal;
 }
 
 .sticky-col.col-category {
@@ -236,39 +238,39 @@ body {
   color: var(--highlight);
 }
 
-th.sticky-col {
+thead th.sticky-col {
   z-index: 15;
 }
 
-.budget-table td.sticky-col {
+.budget-table tbody .sticky-col {
   background: var(--bg-card);
 }
 
-.budget-table .section-header.income-section td.sticky-col {
+.budget-table .section-header.income-section .sticky-col {
   background-color: var(--bg-card);
   background-image: linear-gradient(rgba(76, 175, 80, 0.08), rgba(76, 175, 80, 0.08));
 }
 
-.budget-table .section-header.expense-section td.sticky-col {
+.budget-table .section-header.expense-section .sticky-col {
   background-color: var(--bg-card);
   background-image: linear-gradient(rgba(244, 67, 54, 0.08), rgba(244, 67, 54, 0.08));
 }
 
-.budget-table .section-spacer td.sticky-col {
+.budget-table .section-spacer .sticky-col {
   background: var(--bg);
 }
 
-.budget-table .income-total td.sticky-col {
+.budget-table .income-total .sticky-col {
   background-color: var(--bg-card);
   background-image: linear-gradient(rgba(76, 175, 80, 0.1), rgba(76, 175, 80, 0.1));
 }
 
-.budget-table .expense-total td.sticky-col {
+.budget-table .expense-total .sticky-col {
   background-color: var(--bg-card);
   background-image: linear-gradient(rgba(244, 67, 54, 0.1), rgba(244, 67, 54, 0.1));
 }
 
-.budget-table .balance-row td.sticky-col {
+.budget-table .balance-row .sticky-col {
   background-color: var(--bg-card);
   background-image: linear-gradient(rgba(79, 195, 247, 0.1), rgba(79, 195, 247, 0.1));
 }

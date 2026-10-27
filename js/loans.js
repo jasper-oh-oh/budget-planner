@@ -73,7 +73,7 @@ const LoansView = {
     for (const rowDef of rows) {
       const tr = document.createElement('tr');
       if (rowDef.className) tr.className = rowDef.className;
-      tr.innerHTML = `<td class="sticky-col row-label">${rowDef.label}</td>`;
+      tr.innerHTML = `<th class="sticky-col row-label">${rowDef.label}</td>`;
       for (const r of results) {
         const val = r[rowDef.key];
         let display;

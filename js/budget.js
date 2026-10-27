@@ -160,7 +160,7 @@ const BudgetView = {
     // === 수입 섹션 (항상 기본 순서) ===
     const incomeHeader = document.createElement('tr');
     incomeHeader.className = 'section-header income-section';
-    incomeHeader.innerHTML = `<td class="sticky-col col-category section-title" colspan="3">수입</td>` +
+    incomeHeader.innerHTML = `<th class="sticky-col col-category section-title" colspan="3">수입</td>` +
       monthKeys.map((_, i) => `<td colspan="${colSpan}" class="${i % 2 === 0 ? 'month-even' : ''}"></td>`).join('');
     tbody.appendChild(incomeHeader);
 
@@ -183,14 +183,14 @@ const BudgetView = {
 
     const spacer = document.createElement('tr');
     spacer.className = 'section-spacer';
-    spacer.innerHTML = `<td class="sticky-col col-category" colspan="3"></td>` +
+    spacer.innerHTML = `<th class="sticky-col col-category" colspan="3"></td>` +
       monthKeys.map((_, i) => `<td colspan="${colSpan}" class="${i % 2 === 0 ? 'month-even' : ''}"></td>`).join('');
     tbody.appendChild(spacer);
 
     // === 지출 섹션 ===
     const expenseHeader = document.createElement('tr');
     expenseHeader.className = 'section-header expense-section';
-    expenseHeader.innerHTML = `<td class="sticky-col col-category section-title" colspan="3">지출</td>` +
+    expenseHeader.innerHTML = `<th class="sticky-col col-category section-title" colspan="3">지출</td>` +
       monthKeys.map((_, i) => `<td colspan="${colSpan}" class="${i % 2 === 0 ? 'month-even' : ''}"></td>`).join('');
     tbody.appendChild(expenseHeader);
 
@@ -319,15 +319,15 @@ const BudgetView = {
     let cells = '';
     if (rowspan > 0) {
       const catClass = category === '카드대금' ? ' category-card' : (category === '대출' ? ' category-loan' : '');
-      cells += `<td class="sticky-col col-category category-label${catClass}" rowspan="${rowspan}">${category}</td>`;
+      cells += `<th class="sticky-col col-category category-label${catClass}" rowspan="${rowspan}">${category}</td>`;
     }
-    cells += `<td class="sticky-col col-name item-name">
+    cells += `<th class="sticky-col col-name item-name">
       <span class="item-label" ondblclick="BudgetView.editItemName(this, '${type}', '${item.id}')">${item.name}</span>
       <button class="btn-icon btn-delete" onclick="BudgetView.removeItem('${type}', '${item.id}')" title="삭제">×</button>
     </td>`;
     cells += type === 'expense'
-      ? `<td class="sticky-col col-payday">${item.payDay || ''}</td>`
-      : `<td class="sticky-col col-payday"></td>`;
+      ? `<th class="sticky-col col-payday">${item.payDay || ''}</td>`
+      : `<th class="sticky-col col-payday"></td>`;
 
     for (let mi = 0; mi < monthKeys.length; mi++) {
       const mk = monthKeys[mi];
@@ -359,12 +359,12 @@ const BudgetView = {
 
     let cells = '';
     if (rowspan > 0) {
-      cells += `<td class="sticky-col col-category category-label category-card" rowspan="${rowspan}">${category}</td>`;
+      cells += `<th class="sticky-col col-category category-label category-card" rowspan="${rowspan}">${category}</td>`;
     }
-    cells += `<td class="sticky-col col-name item-name">
+    cells += `<th class="sticky-col col-name item-name">
       <span class="item-label" style="color:${card.color}">${card.name}</span>
     </td>`;
-    cells += `<td class="sticky-col col-payday">${card.payDay || ''}</td>`;
+    cells += `<th class="sticky-col col-payday">${card.payDay || ''}</td>`;
 
     for (let mi = 0; mi < monthKeys.length; mi++) {
       const mk = monthKeys[mi];
@@ -399,12 +399,12 @@ const BudgetView = {
 
     let cells = '';
     if (rowspan > 0) {
-      cells += `<td class="sticky-col col-category category-label category-loan" rowspan="${rowspan}">${category}</td>`;
+      cells += `<th class="sticky-col col-category category-label category-loan" rowspan="${rowspan}">${category}</td>`;
     }
-    cells += `<td class="sticky-col col-name item-name">
+    cells += `<th class="sticky-col col-name item-name">
       <span class="item-label" style="color:${loan.color}">${loan.name}</span>
     </td>`;
-    cells += `<td class="sticky-col col-payday">${loan.payDay || ''}</td>`;
+    cells += `<th class="sticky-col col-payday">${loan.payDay || ''}</td>`;
 
     for (let mi = 0; mi < monthKeys.length; mi++) {
       const mk = monthKeys[mi];
@@ -439,12 +439,12 @@ const BudgetView = {
 
     let cells = '';
     if (rowspan > 0) {
-      cells += `<td class="sticky-col col-category category-label category-stock" rowspan="${rowspan}">${category}</td>`;
+      cells += `<th class="sticky-col col-category category-label category-stock" rowspan="${rowspan}">${category}</td>`;
     }
-    cells += `<td class="sticky-col col-name item-name">
+    cells += `<th class="sticky-col col-name item-name">
       <span class="item-label" style="color:${stock.color}">${stock.name}</span>
     </td>`;
-    cells += `<td class="sticky-col col-payday"></td>`;
+    cells += `<th class="sticky-col col-payday"></td>`;
 
     for (let mi = 0; mi < monthKeys.length; mi++) {
       const mk = monthKeys[mi];
@@ -476,7 +476,7 @@ const BudgetView = {
     const tr = document.createElement('tr');
     tr.className = `total-row ${className}`;
 
-    let cells = `<td class="sticky-col col-category total-label" colspan="2">${label}</td><td class="sticky-col col-payday"></td>`;
+    let cells = `<th class="sticky-col col-category total-label" colspan="2">${label}</td><th class="sticky-col col-payday"></td>`;
 
     for (let mi = 0; mi < monthKeys.length; mi++) {
       const mk = monthKeys[mi];
@@ -499,7 +499,7 @@ const BudgetView = {
     const tr = document.createElement('tr');
     tr.className = 'balance-row';
 
-    let cells = `<td class="sticky-col col-category balance-label" colspan="2">결산</td><td class="sticky-col col-payday"></td>`;
+    let cells = `<th class="sticky-col col-category balance-label" colspan="2">결산</td><th class="sticky-col col-payday"></td>`;
 
     for (let mi = 0; mi < monthKeys.length; mi++) {
       const mk = monthKeys[mi];

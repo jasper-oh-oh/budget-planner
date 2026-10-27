@@ -229,7 +229,8 @@ body {
 .category-label {
   font-weight: 600;
   vertical-align: middle;
-  background: rgba(255,255,255,0.02);
+  background-color: var(--bg-card);
+  background-image: linear-gradient(rgba(255,255,255,0.02), rgba(255,255,255,0.02));
 }
 
 .category-card {
@@ -245,11 +246,13 @@ th.sticky-col {
 }
 
 .budget-table .section-header.income-section td.sticky-col {
-  background: rgba(76, 175, 80, 0.08);
+  background-color: var(--bg-card);
+  background-image: linear-gradient(rgba(76, 175, 80, 0.08), rgba(76, 175, 80, 0.08));
 }
 
 .budget-table .section-header.expense-section td.sticky-col {
-  background: rgba(244, 67, 54, 0.08);
+  background-color: var(--bg-card);
+  background-image: linear-gradient(rgba(244, 67, 54, 0.08), rgba(244, 67, 54, 0.08));
 }
 
 .budget-table .section-spacer td.sticky-col {

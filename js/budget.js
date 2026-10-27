@@ -39,6 +39,15 @@ const BudgetView = {
       table.querySelectorAll('thead tr:nth-child(2) th').forEach(th => {
         th.style.top = h + 'px';
       });
+
+      const catTh = firstRow.querySelector('.col-category');
+      const nameTh = firstRow.querySelector('.col-name');
+      if (catTh && nameTh) {
+        const catW = catTh.offsetWidth;
+        const nameW = nameTh.offsetWidth;
+        table.querySelectorAll('.col-name').forEach(el => { el.style.left = catW + 'px'; });
+        table.querySelectorAll('.col-payday').forEach(el => { el.style.left = (catW + nameW) + 'px'; });
+      }
     }
 
     this._bindTooltip(wrapper);

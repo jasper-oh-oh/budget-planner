@@ -150,12 +150,10 @@ body {
 
 /* Table */
 .table-wrapper {
-  overflow-x: auto;
-  overflow-y: visible;
+  overflow: auto;
   border: 2px solid rgba(79, 195, 247, 0.65);
   border-radius: 6px;
   max-height: calc(100vh - 130px);
-  overflow-y: auto;
 }
 
 .budget-table, .card-table {
@@ -198,6 +196,7 @@ body {
 }
 
 .sticky-col {
+  position: -webkit-sticky;
   position: sticky;
   z-index: 5;
   background: var(--bg-card);

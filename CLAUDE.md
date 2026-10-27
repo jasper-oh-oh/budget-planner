@@ -99,6 +99,18 @@ python -m http.server 8080
 수입: 급여, 부수입, 주식
 지출: 주거비, 보험, 교육, 생활비, 여행/레저, 대출, 투자/저축, 카드대금
 
+## 테이블 고정 열/행 (크로스 브라우저)
+
+WebKit(iPad Safari/Chrome)에서 `position: sticky`가 `<td>`에서는 동작하지 않는 버그가 있어, 다음 규칙을 반드시 준수해야 한다:
+
+- **고정 열 셀은 `<th>`를 사용** — tbody에서도 `<td class="sticky-col">`이 아닌 `<th class="sticky-col">`로 마크업. WebKit은 `<th>`의 sticky만 지원
+- **`<th>` 헤더 스타일은 `thead th`로 한정** — `budget-table th`가 아닌 `budget-table thead th`로 선택자를 작성해야 tbody의 `<th>`가 헤더 스타일을 상속받지 않음
+- **sticky 셀에 `display: flex` 사용 금지** — `display: flex`가 적용된 셀은 WebKit에서 sticky가 비활성화됨. 셀 내부 레이아웃은 `white-space: nowrap` + `margin`으로 대체
+- **`border-collapse: separate; border-spacing: 0`** — `border-collapse: collapse`는 WebKit에서 sticky를 깨뜨림
+- **sticky 셀에 불투명 배경 필수** — `background: rgba(...)` 반투명 배경은 `background-color`(불투명) + `background-image`(반투명 gradient) 패턴으로 대체
+- **`-webkit-sticky` 접두사 포함** — `.sticky-col`에 `position: -webkit-sticky; position: sticky;` 모두 선언
+- **`left` 오프셋은 JS로 동적 계산** — 렌더링 후 실제 열 너비 기반으로 `left` 값 재계산 (`budget.js` render 마지막 부분)
+
 ## 코딩 규칙
 
 - 외부 라이브러리/CDN 없이 순수 JS로 구현

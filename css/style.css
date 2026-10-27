@@ -192,7 +192,7 @@ body {
   position: -webkit-sticky;
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 2;
   border-bottom: 2px solid rgba(79, 195, 247, 0.65);
 }
 

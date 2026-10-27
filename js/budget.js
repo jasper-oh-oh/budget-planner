@@ -35,7 +35,7 @@ const BudgetView = {
 
     const firstRow = table.querySelector('thead tr:first-child');
     if (firstRow) {
-      const h = firstRow.offsetHeight;
+      const h = firstRow.getBoundingClientRect().height;
       table.querySelectorAll('thead tr:nth-child(2) th').forEach(th => {
         th.style.top = h + 'px';
       });
@@ -43,8 +43,8 @@ const BudgetView = {
       const catTh = firstRow.querySelector('.col-category');
       const nameTh = firstRow.querySelector('.col-name');
       if (catTh && nameTh) {
-        const catW = catTh.offsetWidth;
-        const nameW = nameTh.offsetWidth;
+        const catW = catTh.getBoundingClientRect().width;
+        const nameW = nameTh.getBoundingClientRect().width;
         table.querySelectorAll('.col-name').forEach(el => { el.style.left = catW + 'px'; });
         table.querySelectorAll('.col-payday').forEach(el => { el.style.left = (catW + nameW) + 'px'; });
       }

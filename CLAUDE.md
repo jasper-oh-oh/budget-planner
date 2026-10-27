@@ -111,6 +111,7 @@ WebKit(iPad Safari/Chrome)에서 `position: sticky`가 `<td>`에서는 동작하
 - **`-webkit-sticky` 접두사 포함** — `.sticky-col`에 `position: -webkit-sticky; position: sticky;` 모두 선언
 - **`left` 오프셋은 JS로 동적 계산** — 렌더링 후 `getBoundingClientRect()`로 실제 열 너비 기반 `left` 값 재계산 (`budget.js` render 마지막 부분). 헤더 2행 `top` 오프셋도 동일 방식
 - **z-index 계층**: 일반 데이터(0) < 스크롤 헤더 `thead th`(2) < 고정 열 body `.sticky-col`(5) < 코너 셀 `thead th.sticky-col`(15). 스크롤 헤더가 고정 열보다 낮아야 좌우 스크롤 시 겹침 방지
+- **터치 디바이스 hover 주의** — iPad에서 탭 후 `:hover`가 유지되어 반투명 배경이 sticky 셀을 투명하게 만들 수 있음. sticky 셀에 영향을 주는 `:hover` 규칙은 `@media (hover: hover) { }` 안에 작성
 
 ## 코딩 규칙
 

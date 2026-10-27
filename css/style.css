@@ -159,7 +159,8 @@ body {
 }
 
 .budget-table, .card-table {
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   white-space: nowrap;
   width: max-content;
   min-width: 100%;
@@ -169,9 +170,20 @@ body {
 .budget-table td,
 .card-table th,
 .card-table td {
-  border: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
   padding: 4px 8px;
   text-align: right;
+}
+
+.budget-table tr > :first-child,
+.card-table tr > :first-child {
+  border-left: 1px solid var(--border);
+}
+
+.budget-table thead tr:first-child th,
+.card-table thead tr:first-child th {
+  border-top: 1px solid var(--border);
 }
 
 .budget-table th,
